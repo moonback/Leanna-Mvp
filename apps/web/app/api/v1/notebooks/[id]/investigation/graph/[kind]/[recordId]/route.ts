@@ -26,7 +26,7 @@ export const PATCH = handle(async (req: NextRequest, { params }: Params) => {
   const body = await parseBody(req, bodySchema);
   if (!(target.statuses as readonly string[]).includes(body.status)) throw new ApiError(422, "invalid_review_status");
   const db = createServiceClient();
-  const statusColumn = kind === "cluster" || kind === "mention" || kind === "relation" ? "status" : "status";
+  const statusColumn = kind === "mention" ? "match_status" : "status";
   const { data, error } = await db.from(target.table).update({
     [statusColumn]: body.status,
     reviewed_by: user.id,
