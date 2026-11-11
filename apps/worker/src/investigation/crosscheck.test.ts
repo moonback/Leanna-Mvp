@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCrosscheck } from "./crosscheck.ts";
+import { buildSourceFamilies, parseCrosscheck } from "./crosscheck.ts";
 
 describe("investigation cross-source analysis", () => {
   it("parses a proposed lead with cited evidence records", () => {
@@ -27,6 +27,25 @@ describe("investigation cross-source analysis", () => {
         evidence: [{ record_id: "11111111-1111-4111-8111-111111111111", role: "suspect", quote: "Une citation suffisamment longue." }],
       }],
     }))).toThrow();
+  });
+
+  it("treats copies, translations and derivatives in one lineage chain as one origin", () => {
+    const families = buildSourceFamilies(
+      ["source-a", "source-b", "source-c", "source-independent"],
+      [
+        { parent_source_id: "source-a", child_source_id: "source-copy" },
+        { parent_source_id: "source-copy", child_source_id: "source-b" },
+        { parent_source_id: "source-b", child_source_id: "source-c" },
+      ],
+    );
+    expect(families.get("source-a")).toBe(families.get("source-b"));
+    expect(families.get("source-b")).toBe(families.get("source-c"));
+    expect(families.get("source-a")).not.toBe(families.get("source-independent"));
+  });
+
+  it("keeps unrelated sources as independent origins", () => {
+    const families = buildSourceFamilies(["source-a", "source-b"], []);
+    expect(families.get("source-a")).not.toBe(families.get("source-b"));
   });
 
   it("accepts an empty result when no documentary lead is supported", () => {
