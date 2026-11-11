@@ -46,7 +46,7 @@ const leadSchema = z.object({
 }).strict();
 const createSchema = z.discriminatedUnion("kind", [entitySchema,eventSchema,statementSchema,leadSchema]).superRefine((value, ctx) => {
   if (value.kind === "entity") {
-    if (value.char_start != null && value.char_end != null && value.char_end <= value.char_start) {
+    if ((value.char_start == null) !== (value.char_end == null) || (value.char_start != null && value.char_end != null && value.char_end <= value.char_start)) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Offsets invalides.", path: ["char_end"] });
     }
     if (!value.context_excerpt.includes(value.label)) {
