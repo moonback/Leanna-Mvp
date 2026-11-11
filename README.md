@@ -111,7 +111,7 @@ Les variables principales sont :
 | `APP_URL`, `BILLING_MODE` | URL publique et mode de facturation |
 | `NEXT_PUBLIC_LEGAL_ENTITY`, `NEXT_PUBLIC_LEGAL_EMAIL` | Informations des pages légales |
 
-La liste complète et les variables worker sont détaillées dans [Configuration](docs/CONFIGURATION.md). Ne versionnez jamais de secrets. Web et worker doivent utiliser des embeddings compatibles de même dimension (1024 selon la configuration décrite).
+La configuration est documentée dans [l'index documentaire](docs/README.md) et dans l'exemple `apps/worker/.env.example`. Ne versionnez jamais de secrets. Web et worker doivent utiliser des embeddings compatibles de même dimension (1024 selon la configuration décrite).
 
 ## Scripts
 
