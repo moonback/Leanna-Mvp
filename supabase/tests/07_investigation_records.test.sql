@@ -10,6 +10,7 @@ insert into auth.users (id, email) values
 
 create temp table ctx as
 select (select id from public.workspaces where owner_id = '00000000-0000-0000-0000-00000000000a') as ws;
+grant select on ctx to authenticated, service_role;
 
 insert into public.notebooks (id, workspace_id, created_by, title)
 select '22222222-2222-2222-2222-222222222222', ws, '00000000-0000-0000-0000-00000000000a', 'Dossier A' from ctx;
