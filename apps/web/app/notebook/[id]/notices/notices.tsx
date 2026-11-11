@@ -155,6 +155,7 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
                   {canEdit && notice.publication_status === "unverified" && <Button size="sm" variant="secondary" onClick={() => void review(notice, { publicationStatus: "active" })}><ShieldCheck aria-hidden /> Confirmer la publication</Button>}
                   {canEdit && notice.publication_status === "active" && <Button size="sm" variant="ghost" onClick={() => void review(notice, { publicationStatus: "unavailable" })}><RefreshCw aria-hidden /> Signaler inaccessible</Button>}
                   {canEdit && notice.publication_status !== "removed" && <Button size="sm" variant="ghost" onClick={() => void review(notice, { publicationStatus: "removed" })}>Signaler le retrait</Button>}
+                  {canEdit && <Button size="sm" variant="soft" loading={creatingDossierFor === notice.id} disabled={creatingDossierFor !== null} onClick={() => void createDossier(notice)}>Créer un dossier depuis cet avis</Button>}
                   <Link href={'/notebook/' + notebookId} className="inline-flex h-8 items-center rounded-md px-3 text-sm text-text-muted hover:bg-surface-raised">Retour aux sources</Link>
                 </div>
               </div>
