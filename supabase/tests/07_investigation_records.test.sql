@@ -95,9 +95,9 @@ select throws_ok(
 select is(
   (select count(*)::int from pg_tables
     where schemaname = 'public'
-      and tablename in ('investigation_entities','investigation_events','investigation_statements','investigation_leads')
+      and tablename in ('investigation_entities','investigation_events','investigation_statements','investigation_leads','investigation_lead_evidence')
       and rowsecurity),
-  4, 'RLS est activée sur toutes les tables métier'
+  5, 'RLS est activée sur toutes les tables métier'
 );
 
 select * from finish();
