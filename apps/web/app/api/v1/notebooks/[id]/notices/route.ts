@@ -62,21 +62,23 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
   const user = await requireUser();
   const { id } = await params;
   await requireRole(id, "editor");
-  const body = await parseBody(req, createSchema);
-  const url = allowedSourceUrl(body.sourceUrl, body.sourceName);
+  const parsed = await parseBody(req, createSchema);
   const db = createServiceClient();
   const { data: notebook, error: notebookError } = await db.from("notebooks").select("workspace_id").eq("id", id).single();
   if (notebookError || !notebook) throw new ApiError(404, "not_found");
-
-  const snapshot = {
-    sourceName: body.sourceName,
-    sourceUrl: url.toString(),
-    sourceReference: body.sourceReference ?? null,
-    personName: body.personName,
-    publishedDateText: body.publishedDateText ?? null,
-    disappearanceLocation: body.disappearanceLocation ?? null,
-    publishedSummary: body.publishedSummary ?? null,
-  };
+  let body: { sourceName: "arpd" | "116000" | "interpol"; sourceUrl: string; sourceReference: string | null; personName: string; publishedDateText: string | null; disappearanceLocation: string | null; publishedSummary: string | null; catalogId: string | null };
+  if ("catalogId" in parsed) {
+    const { data: item, error: itemError } = await db.from("missing_person_notice_catalog").select("id, source_name, source_url, source_item_id, title, excerpt, published_at").eq("id", parsed.catalogId).single();
+    if (itemError || !item) throw new ApiError(404, "catalog_item_not_found");
+    if (item.source_name !== "116000" && item.source_name !== "arpd") throw new ApiError(422, "catalog_source_not_supported");
+    body = { sourceName: item.source_name, sourceUrl: item.source_url, sourceReference: item.source_item_id, personName: item.title, publishedDateText: item.published_at, disappearanceLocation: null, publishedSummary: item.excerpt, catalogId: item.id };
+    const { data: duplicateCatalog } = await db.from("missing_person_notices").select("id").eq("notebook_id", id).eq("catalog_id", item.id).maybeSingle();
+    if (duplicateCatalog) throw new ApiError(409, "notice_already_imported", { noticeId: duplicateCatalog.id });
+  } else {
+    body = { ...parsed, catalogId: null, sourceReference: parsed.sourceReference ?? null, publishedDateText: parsed.publishedDateText ?? null, disappearanceLocation: parsed.disappearanceLocation ?? null, publishedSummary: parsed.publishedSummary ?? null };
+  }
+  const url = allowedSourceUrl(body.sourceUrl, body.sourceName);
+  const snapshot = { sourceName: body.sourceName, sourceUrl: url.toString(), sourceReference: body.sourceReference, personName: body.personName, publishedDateText: body.publishedDateText, disappearanceLocation: body.disappearanceLocation, publishedSummary: body.publishedSummary };
   const contentHash = createHash("sha256").update(JSON.stringify(snapshot)).digest("hex");
   const { data: duplicate } = await db.from("missing_person_notices").select("id").eq("notebook_id", id).eq("content_hash", contentHash).maybeSingle();
   if (duplicate) throw new ApiError(409, "notice_already_imported", { noticeId: duplicate.id });
@@ -103,6 +105,7 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
     published_summary: body.publishedSummary ?? null,
     content_hash: contentHash,
     created_by: user.id,
+    catalog_id: body.catalogId,
   }).select("id, source_id, person_name, review_status, publication_status, collected_at").single();
 
   if (noticeError) {
