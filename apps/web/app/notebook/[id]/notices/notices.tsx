@@ -17,7 +17,7 @@ type Notice = {
   collected_at: string; last_seen_at: string; reviewed_at: string | null; review_note: string | null;
 };
 const SOURCE_LABELS = { arpd: "ARPD", "116000": "116 000 Enfants Disparus", interpol: "INTERPOL — notice jaune" };
-const STATUS_LABELS: Record<string, string> = { active: "Publication active (à recontrôler)", changed: "Publication modifiée", removed: "Publication retirée", unavailable: "Source inaccessible", pending_review: "À examiner", approved: "Validé par un éditeur", rejected: "Écarté" };
+const STATUS_LABELS: Record<string, string> = { unverified: "Publication à vérifier", active: "Publication active", changed: "Publication modifiée", removed: "Publication retirée", unavailable: "Source inaccessible", pending_review: "À examiner", approved: "Validé par un éditeur", rejected: "Écarté" };
 
 export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: string; canEdit: boolean }) {
   const [notices, setNotices] = React.useState<Notice[]>([]);
@@ -71,7 +71,7 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
-          <Badge>Sources autorisées : ARPD, 116 000, INTERPOL</Badge>
+          <Badge>Sites pris en charge : ARPD, 116 000, INTERPOL</Badge>
           <Badge tone="warning">Import manuel — pas de scraping automatique</Badge>
         </div>
         {canEdit && <Button onClick={() => setFormOpen((v) => !v)}><Plus aria-hidden /> Ajouter un avis</Button>}
@@ -121,7 +121,7 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
                 {notice.published_date_text && <p>Date publiée : {notice.published_date_text}</p>}
                 {notice.disappearance_location && <p>Lieu publié : {notice.disappearance_location}</p>}
                 <p>Collecté le {new Date(notice.collected_at).toLocaleString("fr-FR")}</p>
-                <p>Dernière présence constatée : {new Date(notice.last_seen_at).toLocaleString("fr-FR")}</p>
+                {notice.publication_status !== "unverified" && <p>Dernière vérification positive : {new Date(notice.last_seen_at).toLocaleString("fr-FR")}</p>}
               </div>
               {notice.published_summary && <p className="whitespace-pre-wrap text-sm">{notice.published_summary}</p>}
               {notice.review_note && <p className="text-sm text-text-muted">Note de revue : {notice.review_note}</p>}
@@ -130,6 +130,7 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
                 <div className="flex flex-wrap gap-2">
                   {canEdit && notice.review_status === "pending_review" && <Button size="sm" variant="secondary" onClick={() => void review(notice, { reviewStatus: "approved" })}><ShieldCheck aria-hidden /> Valider la fiche</Button>}
                   {canEdit && notice.review_status !== "rejected" && <Button size="sm" variant="ghost" onClick={() => void review(notice, { reviewStatus: "rejected" })}>Écarter</Button>}
+                  {canEdit && notice.publication_status === "unverified" && <Button size="sm" variant="secondary" onClick={() => void review(notice, { publicationStatus: "active" })}><ShieldCheck aria-hidden /> Confirmer la publication</Button>}
                   {canEdit && notice.publication_status === "active" && <Button size="sm" variant="ghost" onClick={() => void review(notice, { publicationStatus: "unavailable" })}><RefreshCw aria-hidden /> Signaler inaccessible</Button>}
                   {canEdit && notice.publication_status !== "removed" && <Button size="sm" variant="ghost" onClick={() => void review(notice, { publicationStatus: "removed" })}>Signaler le retrait</Button>}
                   <Button size="sm" variant="ghost" onClick={() => window.location.assign(`/notebook/${notebookId}#source-${notice.source_id}`)}>Voir la source</Button>
