@@ -69,13 +69,13 @@ Le worker consomme les jobs persistés en base. Le système décrit dans le code
 
 ### Installation
 ```bash
-git clone https://github.com/moonback/leanna-notebook.git
-cd leanna-notebook
+git clone https://github.com/moonback/Leanna-Mvp.git
+cd Leanna-Mvp
 pnpm install
 pnpm db:start
 ```
 
-Configurez les variables web et worker. Le README précédent référençait `apps/web/.env.example`, dont l'existence n'a pas été confirmée lors de l'audit distant. L'exemple worker accessible est `apps/worker/.env.example`.
+Configurez les variables web et worker. Le dépôt fournit `apps/worker/.env.example`. Aucun fichier `apps/web/.env.example` n'est présent ; créez `apps/web/.env.local` à partir de la liste de variables de la documentation.
 
 ### Lancement
 Terminal 1 :
@@ -111,7 +111,7 @@ Les variables principales sont :
 | `APP_URL`, `BILLING_MODE` | URL publique et mode de facturation |
 | `NEXT_PUBLIC_LEGAL_ENTITY`, `NEXT_PUBLIC_LEGAL_EMAIL` | Informations des pages légales |
 
-La liste complète et les variables worker sont détaillées dans [Configuration](docs/CONFIGURATION.md). Ne versionnez jamais de secrets. Web et worker doivent utiliser des embeddings compatibles de même dimension (1024 selon la configuration décrite).
+La configuration web et worker est détaillée dans [Configuration](docs/CONFIGURATION.md). Ne versionnez jamais de secrets. Web et worker doivent utiliser des embeddings compatibles de même dimension (1024 selon la configuration décrite).
 
 ## Scripts
 
@@ -133,28 +133,28 @@ Ces commandes proviennent des manifestes du dépôt ; elles n'ont pas été exé
 
 L'index de référence est [docs/README.md](docs/README.md).
 
-Documents importants :
+Documents disponibles :
 - [Vision produit — enquêtes sur personnes disparues](docs/PRODUCT_VISION.md)
 - [Architecture](docs/ARCHITECTURE.md)
-- [Référence API](docs/API_REFERENCE.md)
-- [Base de données](docs/DATABASE.md)
-- [Catalogue des prompts IA](docs/AI_PROMPTS_CATALOG.md)
-- [Gestion des prompts](docs/features/SYSTEM_PROMPTS.md)
-- [Mode vocal](docs/features/VOICE_MODE.md)
-- [Studio](docs/features/STUDIO.md)
-- [Guide utilisateur](docs/user-guide/GETTING_STARTED.md)
+- [Installation locale](docs/INSTALLATION.md)
+- [Configuration](docs/CONFIGURATION.md)
+- [Structure du dépôt](docs/PROJECT_STRUCTURE.md)
 - [Audit documentaire](docs/DOCUMENTATION_AUDIT.md)
+- [Architecture de génération d'images](docs/architecture/IMAGE_GENERATION_ARCHITECTURE.md)
+- [Audit de génération d'images](docs/audits/IMAGE_GENERATION_AUDIT.md)
+- [OpenRouter et Nano Banana](docs/technical/OPENROUTER_NANO_BANANA.md)
+- [Guide du client desktop](apps/desktop/README.md)
 
 ## État de la réorientation produit
 
-Cette branche ajoute les fondations métier du dossier d’enquête : entités mentionnées, événements, déclarations et pistes persistées, chacune rattachée à ses sources et extraits. Le panneau permet la saisie, la revue humaine, l’extraction IA par lots et le recoupement multi-sources qui propose des pistes sans les valider. Les extraits IA ne sont enregistrés que s’ils correspondent exactement au texte source ; les traitements sont idempotents et journalisés. La résolution des homonymes, les relations permanentes entre entités et les chronologies avancées restent à développer.
+La version actuelle de `main` contient les fondations métier du dossier d’enquête : entités mentionnées, événements, déclarations et pistes persistées, chacune rattachée à ses sources et extraits. Le panneau permet la saisie, la revue humaine, l’extraction IA par lots et le recoupement multi-sources qui propose des pistes sans les valider. Les extraits IA ne sont enregistrés que s’ils correspondent exactement au texte source ; les traitements sont idempotents et journalisés. La résolution des homonymes, les relations permanentes entre entités et les chronologies avancées restent à développer.
 
 ## Contribution
 
 1. Créer une branche dédiée depuis `main` (par exemple `feat/...`, `fix/...` ou `docs/...`).
 2. Garder les changements ciblés et ajouter/adapter les tests pertinents.
 3. Exécuter `pnpm typecheck`, `pnpm lint`, `pnpm test` et, pour les changements SQL, `pnpm db:test`.
-4. Ouvrir une Pull Request vers `main avec le périmètre, les tests exécutés et les limites connues.
+4. Ouvrir une Pull Request vers `main` avec le périmètre, les tests exécutés et les limites connues.
 
 La structure est organisée autour de `apps/web`, `apps/worker`, `apps/desktop`, `packages/core` et `supabase`. Voir [Structure du projet](docs/PROJECT_STRUCTURE.md).
 
