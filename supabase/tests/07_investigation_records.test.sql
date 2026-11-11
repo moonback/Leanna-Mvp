@@ -1,7 +1,7 @@
 -- Modèle métier d'enquête : provenance, isolation RLS et revue sous contrôle serveur.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(7);
+select plan(10);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'inv-a@test.local'),
@@ -58,7 +58,32 @@ select ctx.ws, '22222222-2222-2222-2222-222222222222', l.id, src.id, 'support',
 from ctx, src, public.investigation_leads l
 where l.notebook_id = '22222222-2222-2222-2222-222222222222';
 
-create or replace function pg_temp.login(p uuid) returns void language sql as $$
+set local role service_role;
+select is(
+  public.queue_investigation_extract_jobs(
+    '22222222-2222-2222-2222-222222222222',
+    '00000000-0000-0000-0000-00000000000a',
+    (select jsonb_agg(jsonb_build_object('id', s.id, 'version', s.updated_at))
+       from public.sources s where s.id = (select id from src))
+  ),
+  1, 'la planification réserve un job pour chaque source prête'
+);
+select is(
+  public.queue_investigation_extract_jobs(
+    '22222222-2222-2222-2222-222222222222',
+    '00000000-0000-0000-0000-00000000000a',
+    (select jsonb_agg(jsonb_build_object('id', s.id, 'version', s.updated_at))
+       from public.sources s where s.id = (select id from src))
+  ),
+  0, 'la même version de source ne crée pas un second job'
+);
+select is(
+  (select count(*)::int from public.usage_ledger where feature = 'investigation_extract' and status = 'reserved'),
+  1, 'un seul crédit est réservé pour une analyse idempotente'
+);
+reset role;
+
+create or replace function pg_temp.login(p uuid) returns void language sql as $
   select set_config('request.jwt.claims', json_build_object('sub', p, 'role', 'authenticated')::text, true);
   set local role authenticated;
 $$;
