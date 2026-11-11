@@ -7,7 +7,7 @@ type Params = { params: Promise<{ id: string; noticeId: string }> };
 
 const reviewSchema = z.object({
   reviewStatus: z.enum(["approved", "rejected", "pending_review"]).optional(),
-  publicationStatus: z.enum(["active", "changed", "removed", "unavailable"]).optional(),
+  publicationStatus: z.enum(["unverified", "active", "changed", "removed", "unavailable"]).optional(),
   reviewNote: z.string().trim().max(2000).nullable().optional(),
 }).strict().refine((value) => Object.keys(value).length > 0, "Aucune modification.");
 
@@ -25,7 +25,10 @@ export const PATCH = handle(async (req: NextRequest, { params }: Params) => {
     update.reviewed_by = user.id;
     update.reviewed_at = new Date().toISOString();
   }
-  if (body.publicationStatus !== undefined) update.publication_status = body.publicationStatus;
+  if (body.publicationStatus !== undefined) {
+    update.publication_status = body.publicationStatus;
+    if (body.publicationStatus === "active") update.last_seen_at = new Date().toISOString();
+  }
   if (body.reviewNote !== undefined) update.review_note = body.reviewNote;
   const { data, error } = await db.from("missing_person_notices").update(update)
     .eq("id", noticeId).eq("notebook_id", id)
