@@ -29,7 +29,7 @@ Les événements existants (investigation_events) restent des assertions propres
 ## Règles de provenance
 
 - Les relations sont créées au statut proposed.
-- Une relation doit avoir une citation présente dans le texte extrait de sa source.
+- Une relation doit avoir une citation présente dans le texte extrait de sa source ; elle peut aussi référencer l'événement documentaire correspondant, dont l'extrait doit contenir cette citation.
 - Les offsets ne sont enregistrés que s'ils correspondent exactement à la citation.
 - Les preuves associées à une déclaration, un événement ou une mention doivent appartenir à la même source que celle déclarée sur la preuve.
 - Une contradiction exige au moins deux déclarations issues de deux sources distinctes.
@@ -63,7 +63,7 @@ L'espace de travail propose un panneau Graphe avec quatre vues :
 - Contradictions : déclarations conservées côte à côte et liens vers les pièces.
 - Provenance : filiation des copies et documents dérivés.
 
-Le formulaire de relation n'est accessible qu'à partir de nœuds canoniques confirmés. Il exige une source prête et une citation exacte.
+Le formulaire de relation n'est accessible qu'à partir de nœuds canoniques confirmés. Il exige une source prête et une citation exacte ; il peut lier la relation à un événement provenant de la même source.
 
 ## Limites de cette première livraison
 
