@@ -1,4 +1,4 @@
-# Leanna Notebook
+# Leanna mvp
 
 Assistant de recherche documentaire : rassemblez vos sources, posez des questions à leur sujet et vérifiez les réponses grâce à des citations qui renvoient aux passages d'origine. Le Studio transforme le corpus en supports de synthèse, de création et de révision.
 
