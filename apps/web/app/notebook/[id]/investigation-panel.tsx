@@ -9,7 +9,7 @@ import { Panel } from "@/components/ui/surfaces";
 import { toast } from "@/components/ui/toast";
 
 type Source = { id: string; title: string; status: string };
-type Common = { id: string; source_id: string; context_excerpt?: string; page_number?: number | null; verification_status?: string };
+type Common = { id: string; source_id: string; context_excerpt?: string; page_number?: number | null; verification_status?: string; origin?: "manual" | "ai_extracted" };
 type Entity = Common & { entity_type: string; label: string };
 type EventRecord = Common & { title: string; description: string; original_date_text: string; date_precision: string };
 type Statement = Common & { statement_type: string; content: string; speaker_label?: string | null };
@@ -51,7 +51,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
     } catch { setError(true); }
     finally { setLoading(false); }
   }, [notebookId]);
-  React.useEffect(() => { void load(); }, [load]);
+  React.useEffect(() => { void load(); }, [load]);\n  React.useEffect(() => {\n    if (!data.extractionJobs.some((job) => job.status === "queued" || job.status === "running")) return;\n    const timer = window.setInterval(() => void load(), 3000);\n    return () => window.clearInterval(timer);\n  }, [data.extractionJobs, load]);
 
   const set = (key: string, value: string) => setFields((old) => ({ ...old, [key]: value }));
   const startExtraction = async () => {
@@ -121,9 +121,9 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
   const excerpt = (value?: string) => value ? <p className="mt-2 whitespace-pre-wrap rounded-md bg-surface-secondary p-2 text-xs text-text-muted">« {value} »</p> : null;
 
   const records = [
-    ...data.entities.map((x) => ({ id:x.id, kind:"entity" as const, title:x.label, subtitle:typeLabel[x.entity_type], source_id:x.source_id, page:x.page_number, excerpt:x.context_excerpt, status:x.verification_status })),
-    ...data.events.map((x) => ({ id:x.id, kind:"event" as const, title:x.title, subtitle:x.original_date_text, source_id:x.source_id, page:x.page_number, excerpt:x.context_excerpt, status:x.verification_status })),
-    ...data.statements.map((x) => ({ id:x.id, kind:"statement" as const, title:x.content, subtitle:typeLabel[x.statement_type], source_id:x.source_id, page:x.page_number, excerpt:x.context_excerpt, status:x.verification_status })),
+    ...data.entities.map((x) => ({ id:x.id, kind:"entity" as const, title:x.label, subtitle:`${typeLabel[x.entity_type]} · ${x.origin === "ai_extracted" ? "Extrait par IA" : "Ajout manuel"}`, source_id:x.source_id, page:x.page_number, excerpt:x.context_excerpt, status:x.verification_status })),
+    ...data.events.map((x) => ({ id:x.id, kind:"event" as const, title:x.title, subtitle:`${x.original_date_text} · ${x.origin === "ai_extracted" ? "Extrait par IA" : "Ajout manuel"}`, source_id:x.source_id, page:x.page_number, excerpt:x.context_excerpt, status:x.verification_status })),
+    ...data.statements.map((x) => ({ id:x.id, kind:"statement" as const, title:x.content, subtitle:`${typeLabel[x.statement_type]} · ${x.origin === "ai_extracted" ? "Extrait par IA" : "Ajout manuel"}`, source_id:x.source_id, page:x.page_number, excerpt:x.context_excerpt, status:x.verification_status })),
   ];
 
   return (
@@ -138,7 +138,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
           {data.extractionJobs.map((job) => <div key={job.id} className="flex items-center justify-between gap-3 rounded-md border border-border p-2 text-xs">
             <span className="min-w-0 truncate">{sourceName(job.target_id ?? "")}</span>
             <span className="flex shrink-0 items-center gap-2">
-              <span className="text-text-muted">{job.status === "queued" ? "En attente" : job.status === "running" ? (job.stage ?? "Analyse en cours") : job.status === "succeeded" ? "Terminé" : job.status === "failed" ? "Échec" : job.status}</span>
+              <span className="text-text-muted">{job.status === "queued" ? "En attente" : job.status === "running" ? (job.stage ?? "Analyse en cours") : job.status === "succeeded" ? "Terminé" : job.status === "failed" ? (job.error_code ?? "Échec") : job.status}</span>
               <Badge tone={job.status === "succeeded" ? "success" : job.status === "failed" ? "danger" : job.status === "running" || job.status === "queued" ? "accent" : "neutral"}>{job.status === "running" ? `${job.progress}%` : statusLabel[job.status] ?? job.status}</Badge>
             </span>
           </div>)}
