@@ -25,6 +25,7 @@ select public.add_source(
   '00000000-0000-0000-0000-00000000000a',
   'txt', 'Compte rendu'
 ) as id;
+grant select on src to authenticated, service_role;
 update public.sources set status = 'ready' where id = (select id from src);
 
 insert into public.investigation_entities
