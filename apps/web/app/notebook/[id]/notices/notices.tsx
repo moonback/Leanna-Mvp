@@ -53,7 +53,7 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
         body: JSON.stringify({ sourceName, sourceUrl, sourceReference: sourceReference || null, personName, publishedDateText: publishedDateText || null, disappearanceLocation: disappearanceLocation || null, publishedSummary: publishedSummary || null }),
       });
       const json = await response.json();
-      if (!response.ok) throw new Error(json.error === "source_domain_not_allowed" ? "Le domaine ne correspond pas à l’organisme sélectionné." : "Import impossible. Vérifiez l’adresse et réessayez.");
+      if (!response.ok) throw new Error(json.error === "source_domain_not_allowed" ? "Le domaine ne correspond pas à l’organisme sélectionné." : json.error === "notice_already_imported" ? "Cet avis identique existe déjà dans ce dossier." : "Import impossible. Vérifiez l’adresse et réessayez.");
       setFormOpen(false); setSourceUrl(""); setSourceReference(""); setPersonName(""); setPublishedDateText(""); setDisappearanceLocation(""); setPublishedSummary("");
       toast({ title: "Avis ajouté au dossier", description: "La page originale est en cours d’indexation." });
       await load();
@@ -76,7 +76,15 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
         </div>
         {canEdit && <Button onClick={() => setFormOpen((v) => !v)}><Plus aria-hidden /> Ajouter un avis</Button>}
       </div>
-      <Alert title="Prudence et confidentialité">
+      <div className="grid gap-2 rounded-lg border p-3 text-sm">
+        <p className="font-medium">Consulter les publications originales</p>
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          <Link href="https://www.arpd.fr/fr/recherche-disparition-accueil" target="_blank" rel="noreferrer" className="text-accent hover:underline">ARPD</Link>
+          <Link href="https://www.116000enfantsdisparus.fr/avis-de-recherche/" target="_blank" rel="noreferrer" className="text-accent hover:underline">116 000 Enfants Disparus</Link>
+          <Link href="https://www.interpol.int/How-we-work/Notices/Yellow-Notices/View-Yellow-Notices" target="_blank" rel="noreferrer" className="text-accent hover:underline">INTERPOL — notices jaunes</Link>
+        </div>
+      </div>
+      <Alert tone="warning" title="Prudence et confidentialité">
         N’ajoutez que des avis publiés et accessibles légalement. Pour les mineurs, limitez les données copiées au strict nécessaire. Le statut « retiré » indique seulement que la publication n’est plus disponible : il ne confirme pas que la personne a été retrouvée.
       </Alert>
       {formOpen && canEdit && (
@@ -123,6 +131,7 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
                   {canEdit && notice.review_status === "pending_review" && <Button size="sm" variant="secondary" onClick={() => void review(notice, { reviewStatus: "approved" })}><ShieldCheck aria-hidden /> Valider la fiche</Button>}
                   {canEdit && notice.review_status !== "rejected" && <Button size="sm" variant="ghost" onClick={() => void review(notice, { reviewStatus: "rejected" })}>Écarter</Button>}
                   {canEdit && notice.publication_status === "active" && <Button size="sm" variant="ghost" onClick={() => void review(notice, { publicationStatus: "unavailable" })}><RefreshCw aria-hidden /> Signaler inaccessible</Button>}
+                  {canEdit && notice.publication_status !== "removed" && <Button size="sm" variant="ghost" onClick={() => void review(notice, { publicationStatus: "removed" })}>Signaler le retrait</Button>}
                   <Button size="sm" variant="ghost" onClick={() => window.location.assign(`/notebook/${notebookId}#source-${notice.source_id}`)}>Voir la source</Button>
                 </div>
               </div>
