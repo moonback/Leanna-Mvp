@@ -271,7 +271,7 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
       )}
       {actionsSlot && createPortal(
         <div className="flex items-center gap-2">
-          {role !== "chat" && <Button size="sm" variant={mainView === "investigation" ? "soft" : "secondary"} onClick={() => setMainView((v) => v === "chat" ? "investigation" : "chat")}><ClipboardList aria-hidden />{mainView === "investigation" ? "Retour au chat" : "Enquête"}</Button>}
+          {desktop && role !== "chat" && <Button size="sm" variant={mainView === "investigation" ? "soft" : "secondary"} onClick={() => setMainView((v) => v === "chat" ? "investigation" : "chat")}><ClipboardList aria-hidden />{mainView === "investigation" ? "Retour au chat" : "Enquête"}</Button>}
           <NotebookActionsMenu notebookId={notebookId} allowCopies={allowCopies} canCopy={role === "owner" || (role !== "chat" && allowCopies)} canShare={role === "owner"} />
         </div>,
         actionsSlot,
