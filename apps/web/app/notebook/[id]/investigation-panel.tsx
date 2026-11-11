@@ -237,7 +237,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
             <h3 className="text-sm font-semibold">Pistes à vérifier ({data.leads.length})</h3>
             {data.leads.length === 0 ? <p className="rounded-lg border border-dashed p-4 text-sm text-text-muted">Aucune piste enregistrée. Une piste doit toujours formuler une question vérifiable et présenter ses limites.</p> : data.leads.map((lead) => (
               <article key={lead.id} className="rounded-lg border border-border p-3">
-                <div className="flex items-start justify-between gap-2"><h4 className="text-sm font-semibold">{lead.title}</h4>{status(lead.status)}</div>
+                <div className="flex items-start justify-between gap-2"><div><h4 className="text-sm font-semibold">{lead.title}</h4>{lead.origin === "ai_extracted" && <p className="mt-0.5 text-xs text-text-muted">Piste proposée par IA · à examiner</p>}</div>{status(lead.status)}</div>
                 <p className="mt-2 text-sm">{lead.verification_question}</p>
                 {excerpt(lead.supporting_excerpt)}
                 {lead.counter_evidence && !data.leadEvidence.some((item) => item.lead_id === lead.id && item.evidence_role === "contrary") && <p className="mt-2 text-xs text-text-muted">Limites / éléments contraires : {lead.counter_evidence}</p>}
