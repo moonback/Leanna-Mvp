@@ -83,12 +83,8 @@ select is(
 );
 reset role;
 
-create or replace function pg_temp.login(p uuid) returns void language sql as $
-  select set_config('request.jwt.claims', json_build_object('sub', p, 'role', 'authenticated')::text, true);
-  set local role authenticated;
-$$;
-
-select pg_temp.login('00000000-0000-0000-0000-00000000000a');
+select set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-0000-0000-00000000000a', 'role', 'authenticated')::text, true);
+set local role authenticated;
 select is(
   (select (select count(*) from public.investigation_entities)
         + (select count(*) from public.investigation_events)
@@ -103,12 +99,14 @@ select throws_ok(
 );
 reset role;
 
-select pg_temp.login('00000000-0000-0000-0000-00000000000b');
+select set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-0000-0000-00000000000b', 'role', 'authenticated')::text, true);
+set local role authenticated;
 select is((select count(*)::int from public.investigation_leads), 1, 'un lecteur autorisé peut consulter les pistes');
 select is((select count(*)::int from public.investigation_lead_evidence), 1, 'un lecteur autorisé voit les extraits probants associés');
 reset role;
 
-select pg_temp.login('00000000-0000-0000-0000-00000000000c');
+select set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-0000-0000-00000000000c', 'role', 'authenticated')::text, true);
+set local role authenticated;
 select is((select count(*)::int from public.investigation_entities), 0, 'un utilisateur extérieur ne voit aucune entité');
 reset role;
 
