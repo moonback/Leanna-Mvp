@@ -39,7 +39,6 @@ const leadSchema = z.object({
   title: z.string().trim().min(1).max(240),
   verification_question: z.string().trim().min(1).max(3000),
   supporting_excerpt: z.string().trim().min(1).max(4000),
-  counter_evidence: z.string().max(4000).default(""),
   next_check: z.string().trim().min(1).max(2000),
   confidence: z.enum(["low","moderate","high"]).default("low"),
   page_number: z.number().int().positive().nullable().optional(),
