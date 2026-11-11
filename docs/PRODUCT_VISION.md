@@ -109,9 +109,9 @@ Une piste doit contenir :
 - Politique de conservation, export sécurisé et suppression.
 - Tests de sécurité, tests de non-régression et évaluation de faux positifs.
 
-## 9. État réel de cette branche
+## 9. État réel de la version actuelle
 
-Cette branche comprend désormais :
+La version actuelle comprend :
 - la spécialisation des prompts du chat, de Leanna/Roxane et du Studio ;
 - les libellés de l'accueil et de l'espace dossier orientés enquêtes ;
 - un registre persistant pour les entités mentionnées, événements, déclarations et pistes ;
