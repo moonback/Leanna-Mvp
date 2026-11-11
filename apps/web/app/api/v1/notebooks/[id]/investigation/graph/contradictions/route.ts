@@ -55,6 +55,9 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
     if (!statement || !source || source.status !== "ready" || !source.extracted_text?.includes(item.quote)) {
       throw new ApiError(422, "contradiction_quote_not_found");
     }
+    if (!statement.context_excerpt.includes(item.quote)) {
+      throw new ApiError(422, "contradiction_quote_not_in_statement");
+    }
     const first = source.extracted_text.indexOf(item.quote);
     const unique = first >= 0 && first === source.extracted_text.lastIndexOf(item.quote);
     return {
