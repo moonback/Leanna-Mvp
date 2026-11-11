@@ -133,3 +133,6 @@ revoke insert, update, delete, truncate on public.investigation_entities, public
   public.investigation_statements, public.investigation_leads from anon, authenticated;
 grant select on public.investigation_entities, public.investigation_events,
   public.investigation_statements, public.investigation_leads to authenticated;
+
+grant all on public.investigation_entities, public.investigation_events,
+  public.investigation_statements, public.investigation_leads to service_role;
