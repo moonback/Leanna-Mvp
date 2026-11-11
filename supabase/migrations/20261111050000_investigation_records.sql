@@ -5,6 +5,7 @@ alter table public.notebooks add constraint notebooks_workspace_id_id_unique uni
 alter table public.sources add constraint sources_id_notebook_unique unique (id, notebook_id);
 
 alter type public.job_kind add value if not exists 'investigation_extract';
+alter type public.job_kind add value if not exists 'investigation_crosscheck';
 
 create table public.investigation_entities (
   id uuid primary key default gen_random_uuid(),
@@ -156,3 +157,36 @@ grant select on public.investigation_entities, public.investigation_events,
 
 grant all on public.investigation_entities, public.investigation_events,
   public.investigation_statements, public.investigation_leads to service_role;
+
+
+alter table public.investigation_leads
+  add constraint investigation_leads_id_notebook_unique unique (id, notebook_id),
+  add column origin text not null default 'manual' check (origin in ('manual','ai_extracted')),
+  add column extraction_key text;
+create unique index investigation_leads_extraction_uq on public.investigation_leads(extraction_key);
+
+create table public.investigation_lead_evidence (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references public.workspaces(id) on delete cascade,
+  notebook_id uuid not null references public.notebooks(id) on delete cascade,
+  lead_id uuid not null,
+  source_id uuid not null,
+  evidence_role text not null check (evidence_role in ('support','contrary')),
+  quote text not null check (char_length(quote) between 1 and 4000),
+  page_number integer check (page_number is null or page_number > 0),
+  char_start integer check (char_start is null or char_start >= 0),
+  char_end integer check (char_end is null or char_end > char_start),
+  created_at timestamptz not null default now(),
+  foreign key (lead_id, notebook_id) references public.investigation_leads(id, notebook_id) on delete cascade,
+  foreign key (source_id, notebook_id) references public.sources(id, notebook_id) on delete cascade,
+  foreign key (workspace_id, notebook_id) references public.notebooks(workspace_id, id) on delete cascade,
+  unique (lead_id, source_id, evidence_role, quote)
+);
+create index investigation_lead_evidence_lead_idx on public.investigation_lead_evidence(lead_id);
+create index investigation_lead_evidence_source_idx on public.investigation_lead_evidence(source_id);
+alter table public.investigation_lead_evidence enable row level security;
+create policy investigation_lead_evidence_read on public.investigation_lead_evidence for select to authenticated
+  using (private.notebook_role(notebook_id) >= 'viewer');
+revoke insert, update, delete, truncate on public.investigation_lead_evidence from anon, authenticated;
+grant select on public.investigation_lead_evidence to authenticated;
+grant all on public.investigation_lead_evidence to service_role;
