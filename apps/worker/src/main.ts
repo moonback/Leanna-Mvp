@@ -12,6 +12,7 @@ import { transcriberFromEnv } from "./ai/transcription.ts";
 import { speechFromEnv } from "./ai/speech.ts";
 import { investigationExtractHandler } from "./investigation/extract.ts";
 import { investigationCrosscheckHandler } from "./investigation/crosscheck.ts";
+import { syncMissingPersonNoticeFeed } from "./notices/sync.ts";
 
 const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -62,12 +63,22 @@ process.on("SIGINT", () => (stopping = true));
 console.log(`worker ${workerId} démarré, types gérés : ${Object.keys(handlers).join(", ") || "aucun"}`);
 // Jobs d'un worker mort (bail expiré) : remis en file, ou échec + crédit rendu. Sûr à plusieurs workers.
 let lastSweep = 0;
+let lastNoticeFeedCheck = 0;
 while (!stopping) {
   try {
     if (Date.now() - lastSweep > 60_000) {
       lastSweep = Date.now();
       const { data: n, error } = await db.rpc("requeue_stale_jobs");
       if (error) console.error("requeue_stale_jobs", error.message); else if (n) console.log(`${n} job(s) au bail expiré remis en file`);
+    }
+    if (Date.now() - lastNoticeFeedCheck > 60_000) {
+      lastNoticeFeedCheck = Date.now();
+      try {
+        const count = await syncMissingPersonNoticeFeed(db);
+        if (count) console.log("veille avis 116000 : " + count + " publication(s) synchronisée(s)");
+      } catch (e) {
+        console.error("veille avis 116000", e instanceof Error ? e.message : e);
+      }
     }
     const id = await runOnce(db, workerId, handlers);
     if (!id) await new Promise((r) => setTimeout(r, 2000)); // file vide : attente courte

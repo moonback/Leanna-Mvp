@@ -160,3 +160,10 @@ Aucun fichier `LICENSE` n'a été trouvé à la racine via l'API GitHub lors de 
 ---
 
 **État documentaire :** les guides sont indexés dans [docs/README.md](docs/README.md). Les tests, migrations et parcours déployés doivent être validés séparément avant mise en production.
+
+
+## Avis de recherche et veille automatique
+
+Leanna dispose d'un catalogue de publications détectées automatiquement depuis le flux RSS public du 116 000 Enfants Disparus. Le worker vérifie ce flux toutes les 15 minutes, conserve la provenance et les changements, puis permet d'ajouter une publication à un dossier ou de créer un nouveau dossier privé. Les fiches importées restent à examiner et à valider humainement.
+
+L'automatisation ARPD est désactivée tant que le flux et les conditions d'accès ne sont pas confirmés. INTERPOL n'est pas aspiré automatiquement : ses conditions et la confidentialité de certaines notices imposent une autorisation préalable. Aucun avis absent du flux n'est automatiquement considéré comme retiré ou résolu. Voir [le guide de veille et d'import](docs/MISSING_PERSON_NOTICES.md).

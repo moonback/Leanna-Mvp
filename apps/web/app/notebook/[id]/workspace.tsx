@@ -273,6 +273,7 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
       )}
       {actionsSlot && createPortal(
         <div className="flex items-center gap-2">
+          {role !== "chat" && <a href={"/notebook/" + notebookId + "/notices"} className="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-sm font-medium transition-colors hover:bg-surface-raised"><FileText aria-hidden className="size-4" />Avis de recherche</a>}
           {desktop && role !== "chat" && <><Button size="sm" variant={mainView === "investigation" ? "soft" : "secondary"} onClick={() => setMainView((v) => v === "investigation" ? "chat" : "investigation")}><ClipboardList aria-hidden />Enquête</Button><Button size="sm" variant={mainView === "graph" ? "soft" : "secondary"} onClick={() => setMainView((v) => v === "graph" ? "chat" : "graph")}><Network aria-hidden />Graphe</Button></>}
           <NotebookActionsMenu notebookId={notebookId} allowCopies={allowCopies} canCopy={role === "owner" || (role !== "chat" && allowCopies)} canShare={role === "owner"} />
         </div>,
