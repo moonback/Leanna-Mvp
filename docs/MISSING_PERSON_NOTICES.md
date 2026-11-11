@@ -1,28 +1,46 @@
-# Avis de recherche publics — première version
+# Avis de recherche — veille automatique et dossiers d'enquête
 
-## Périmètre
+## Fonctionnement
 
-Le module permet d'archiver dans un dossier d'enquête un avis de recherche publié par l'ARPD, le dispositif 116 000 Enfants Disparus ou INTERPOL (notice jaune). L'URL originale est également créée comme source web via le pipeline d'ingestion existant ; la fiche structurée reste liée à cette source et au notebook qui la contient. Depuis une fiche importée, un éditeur peut créer un nouveau dossier privé prérempli avec le même avis ; la source est réingérée dans le nouveau dossier.
+Le module combine un catalogue de publications détectées automatiquement et des fiches privées rattachées aux dossiers d'enquête.
 
-## Collecte
+- Le worker Node interroge le flux RSS WordPress du site 116 000 toutes les 15 minutes.
+- Les requêtes utilisent ETag et Last-Modified lorsqu'ils sont fournis par le serveur, avec délai réseau, limite de taille, validation stricte du domaine et bail SQL pour éviter les synchronisations concurrentes.
+- Les métadonnées publiques (titre, URL, extrait RSS, date et identifiant de publication) sont conservées dans un catalogue global.
+- Les utilisateurs connectés voient les publications détectées depuis l'espace Avis de recherche de leur dossier. Ils peuvent ajouter une publication à ce dossier ou créer directement un nouveau dossier privé.
+- L'import d'une publication déclenche la création d'une source web via le pipeline `add_source`. La fiche est en attente de revue humaine.
+- Une modification du titre, de l'URL, de l'extrait ou de la date crée un nouvel état de catalogue avec statut `changed`.
 
-Cette version est une **importation manuelle contrôlée**. Elle ne prétend pas disposer d'API publiques ni d'un droit de scraping. Les domaines sont allowlistés côté serveur :
-- `arpd.fr`
-- `116000enfantsdisparus.fr`
-- `interpol.int`
+## Sources et limites d'accès
 
-Les connecteurs automatiques, flux officiels ou accords de données devront être ajoutés séparément après vérification des conditions d'utilisation, des règles robots, des droits de réutilisation et des autorisations applicables. Les images ne sont pas copiées ni réhébergées.
+| Source | Automatisation | Motif |
+|---|---|---|
+| 116 000 Enfants Disparus | RSS configuré, synchronisation automatique toutes les 15 minutes | Le worker ne lit que le flux public du domaine officiel et ne télécharge aucune photo. Vérifier la disponibilité effective du flux sur l'environnement déployé. |
+| ARPD | Désactivée pour le moment | L'annuaire public est visible, mais le flux officiel et les conditions d'accès automatisé n'ont pas été confirmés. Le domaine renvoie actuellement une réponse 403 à la consultation automatisée utilisée pendant l'audit. |
+| INTERPOL — notices jaunes | Pas de collecte automatique | INTERPOL indique que certaines notices sont réservées aux services de police. Les conditions du site limitent la collecte automatisée sans autorisation expresse. Conserver le lien vers la recherche publique ; demander un accord avant un connecteur. |
+
+La page du 116 000 explique que les avis de recherche concernant les enfants ne sont diffusés qu'après autorisations spécifiques et que les avis sont retirés lorsque l'enfant est retrouvé. Le catalogue Leanna conserve donc la provenance et ne copie pas les images. Un élément absent du flux RSS n'est jamais marqué automatiquement comme « retrouvé » ou « retiré » : les flux sont souvent limités aux publications récentes et l'absence ne prouve rien.
+
+## Sécurité et confidentialité
+
+- Seules les métadonnées exposées dans le flux public sont collectées automatiquement ; pas de téléchargement d'image, de crawl des profils ou de données privées.
+- Les URLs sont limitées au domaine officiel, en HTTPS ; les redirections sont refusées par le connecteur RSS.
+- Le catalogue est accessible aux utilisateurs authentifiés ; les fiches d'enquête restent isolées par notebook avec RLS.
+- Toute publication importée est `pending_review` et `unverified`. Une personne autorisée doit examiner la fiche avant toute validation.
+- Aucune identification automatique, fusion d'homonymes, inférence de localisation ou conclusion d'enquête.
+- L'absence d'un élément dans une synchronisation ne déclenche jamais un statut de disparition/résolution.
 
 ## Cycle de vie
 
-- Une fiche créée est `pending_review` et sa publication est `unverified`.
-- Un éditeur peut l'approuver ou l'écarter.
-- Un éditeur confirme manuellement la publication avant de la marquer `active` ; les statuts `changed`, `removed` ou `unavailable` sont distincts.
-- La date de dernière vérification positive n'est actualisée qu'après cette confirmation manuelle.
-- L'absence d'une publication ne signifie jamais que la personne a été retrouvée.
-- Les révisions de métadonnées conservent un instantané JSON et une empreinte SHA-256.
-- Les notices et révisions sont isolées par notebook via RLS ; les écritures passent par des routes authentifiées avec rôle éditeur et journal d'audit.
+- `pending_review` : fiche créée, revue humaine requise.
+- `unverified` : publication non confirmée manuellement.
+- `active` : présence confirmée manuellement.
+- `changed` : contenu de la publication source modifié.
+- `removed` / `unavailable` : statut signalé par un éditeur ; jamais déduit de la simple absence dans un flux.
+- Les révisions structurées conservent un instantané JSON et une empreinte SHA-256.
 
-## Limites
+## Exploitation
 
-La collecte de la page web et son indexation sont asynchrones via `add_source`. La vérification de présence, la comparaison automatique des révisions, les notifications et les connecteurs programmés ne sont pas encore implémentés. Les champs structurés sont saisis par un éditeur et doivent rester fidèles au contenu de la publication originale. N'ajoutez pas de données non publiées, d'hypothèses d'identité ou de localisation privée.
+La veille automatique tourne dans `apps/worker/src/main.ts`. Elle ne fonctionne que si le worker est démarré, si la migration `20261111110000_missing_person_notice_automation.sql` est appliquée et si la source RSS est accessible depuis l'environnement worker. En cas d'échec, le connecteur conserve le message d'erreur, libère son bail et réessaie après un délai d'une heure.
+
+Le flux est actuellement vérifié toutes les 15 minutes. La première synchronisation peut prendre jusqu'à 15 minutes après le démarrage du worker. Les connecteurs ARPD et INTERPOL doivent être activés séparément après vérification technique et juridique.
