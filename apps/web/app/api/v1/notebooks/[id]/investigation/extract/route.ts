@@ -19,23 +19,19 @@ export const POST = handle(async (_req: NextRequest, { params }: Params) => {
     .select("id, updated_at").eq("notebook_id", id).eq("status", "ready");
   if (error) throw error;
   if (!sources?.length) throw new ApiError(409, "no_ready_sources");
-  const jobs = sources.map((source) => ({
-    workspace_id: notebook.workspace_id,
-    notebook_id: id,
-    user_id: user.id,
-    kind: "investigation_extract",
-    target_id: source.id,
-    payload: { offset: 0, version: source.updated_at, requested_by: user.id },
-    idempotency_key: `investigation-extract:${source.id}:${source.updated_at}:0`,
-  }));
-  const { error: queueError } = await db.from("jobs").upsert(jobs, {
-    onConflict: "idempotency_key", ignoreDuplicates: true,
+  const { data: queued, error: queueError } = await db.rpc("queue_investigation_extract_jobs", {
+    p_notebook: id,
+    p_user: user.id,
+    p_sources: sources.map((source) => ({ id: source.id, version: source.updated_at })),
   });
-  if (queueError) throw queueError;
+  if (queueError) {
+    if (queueError.message.includes("quota_")) throw new ApiError(402, queueError.message);
+    throw queueError;
+  }
   await db.from("audit_log").insert({
     workspace_id: notebook.workspace_id, actor_id: user.id,
     action: "investigation.extract.request", target_type: "notebook", target_id: id,
     meta: { source_count: sources.length },
   });
-  return NextResponse.json({ queued_sources: sources.length }, { status: 202 });
+  return NextResponse.json({ queued_sources: queued ?? 0, ready_sources: sources.length }, { status: 202 });
 });
