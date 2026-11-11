@@ -71,7 +71,7 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
     const { data: item, error: itemError } = await db.from("missing_person_notice_catalog").select("id, source_name, source_url, source_item_id, title, excerpt, published_at").eq("id", parsed.catalogId).single();
     if (itemError || !item) throw new ApiError(404, "catalog_item_not_found");
     if (item.source_name !== "116000" && item.source_name !== "arpd") throw new ApiError(422, "catalog_source_not_supported");
-    body = { sourceName: item.source_name, sourceUrl: item.source_url, sourceReference: item.source_item_id, personName: item.title, publishedDateText: item.published_at, disappearanceLocation: null, publishedSummary: item.excerpt, catalogId: item.id };
+    body = { sourceName: item.source_name, sourceUrl: item.source_url, sourceReference: item.source_item_id.slice(0, 160), personName: item.title.slice(0, 240), publishedDateText: item.published_at, disappearanceLocation: null, publishedSummary: item.excerpt, catalogId: item.id };
     const { data: duplicateCatalog } = await db.from("missing_person_notices").select("id").eq("notebook_id", id).eq("catalog_id", item.id).maybeSingle();
     if (duplicateCatalog) throw new ApiError(409, "notice_already_imported", { noticeId: duplicateCatalog.id });
   } else {
