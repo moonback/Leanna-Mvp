@@ -1,7 +1,7 @@
 -- Modèle métier d'enquête : provenance, isolation RLS et revue sous contrôle serveur.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(6);
+select plan(7);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'inv-a@test.local'),
@@ -72,6 +72,7 @@ reset role;
 
 select pg_temp.login('00000000-0000-0000-0000-00000000000b');
 select is((select count(*)::int from public.investigation_leads), 1, 'un lecteur autorisé peut consulter les pistes');
+select is((select count(*)::int from public.investigation_lead_evidence), 1, 'un lecteur autorisé voit les extraits probants associés');
 reset role;
 
 select pg_temp.login('00000000-0000-0000-0000-00000000000c');
