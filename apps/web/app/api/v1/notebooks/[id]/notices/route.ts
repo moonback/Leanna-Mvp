@@ -28,7 +28,7 @@ function allowedSourceUrl(raw: string, sourceName: keyof typeof SOURCES): URL {
   try { url = new URL(raw); } catch { throw new ApiError(422, "invalid_source_url"); }
   const allowed = SOURCES[sourceName] as readonly string[];
   if (url.protocol !== "https:" || url.username || url.password ||
-      !allowed.some((domain) => url.hostname === domain || url.hostname.endsWith(`. ${domain}`.replace(" ", "")))) {
+      !allowed.some((domain) => url.hostname === domain || url.hostname.endsWith(`.${domain}`))) {
     throw new ApiError(422, "source_domain_not_allowed");
   }
   return url;
