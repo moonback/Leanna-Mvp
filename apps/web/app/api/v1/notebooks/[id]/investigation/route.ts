@@ -53,6 +53,9 @@ const createSchema = z.discriminatedUnion("kind", [entitySchema,eventSchema,stat
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Le libellé doit apparaître dans l’extrait source.", path: ["label"] });
     }
   }
+  if (value.kind === "event" && !value.context_excerpt.includes(value.original_date_text)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "La date originale doit apparaître dans l’extrait source.", path: ["original_date_text"] });
+  }
   if (value.kind === "event" && value.occurred_at_start && value.occurred_at_end
       && new Date(value.occurred_at_end) < new Date(value.occurred_at_start)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Intervalle de dates invalide.", path: ["occurred_at_end"] });
