@@ -173,6 +173,7 @@ create table public.investigation_lead_evidence (
   source_id uuid not null,
   evidence_role text not null check (evidence_role in ('support','contrary')),
   quote text not null check (char_length(quote) between 1 and 4000),
+  quote_hash text not null,
   page_number integer check (page_number is null or page_number > 0),
   char_start integer check (char_start is null or char_start >= 0),
   char_end integer check (char_end is null or char_end > char_start),
