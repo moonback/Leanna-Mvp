@@ -79,7 +79,7 @@ create function private.prevent_investigation_source_lineage_cycle()
 returns trigger
 language plpgsql
 set search_path = ''
-as $
+as $fn$
 begin
   if exists (
     with recursive reachable(source_id) as (
@@ -99,7 +99,7 @@ begin
   end if;
   return new;
 end;
-$;
+$fn$;
 revoke all on function private.prevent_investigation_source_lineage_cycle() from public, anon, authenticated;
 create trigger investigation_source_lineage_no_cycle
   before insert or update of parent_source_id, child_source_id, notebook_id
@@ -169,7 +169,7 @@ create function private.validate_investigation_relation_evidence_provenance()
 returns trigger
 language plpgsql
 set search_path = ''
-as $
+as $fn$
 declare
   v_source_id uuid;
   v_text text;
@@ -205,7 +205,7 @@ begin
   end if;
   return new;
 end;
-$;
+$fn$;
 revoke all on function private.validate_investigation_relation_evidence_provenance() from public, anon, authenticated;
 create trigger investigation_relation_evidence_validate
   before insert or update on public.investigation_relation_evidence
@@ -259,7 +259,7 @@ create function private.validate_investigation_contradiction_evidence_provenance
 returns trigger
 language plpgsql
 set search_path = ''
-as $
+as $fn$
 declare
   v_source_id uuid;
   v_text text;
@@ -284,7 +284,7 @@ begin
   end if;
   return new;
 end;
-$;
+$fn$;
 revoke all on function private.validate_investigation_contradiction_evidence_provenance() from public, anon, authenticated;
 create trigger investigation_contradiction_evidence_validate
   before insert or update on public.investigation_contradiction_evidence
