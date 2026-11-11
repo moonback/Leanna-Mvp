@@ -39,7 +39,12 @@ function key(parts: string[]): string {
 }
 
 export function exactQuoteOffset(content: string, quote: string): number {
+<<<<<<< HEAD
   return content.indexOf(quote);
+=======
+  const first = content.indexOf(quote);
+  return first >= 0 && first === content.lastIndexOf(quote) ? first : -1;
+>>>>>>> 8d32174cb72a8c0569c39cc488598fa5f89d530f
 }
 
 /** Extraction explicite et idempotente : seules les citations littéralement présentes sont persistées. */

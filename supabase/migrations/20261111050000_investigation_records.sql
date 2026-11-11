@@ -259,7 +259,16 @@ begin
   insert into public.jobs (workspace_id, notebook_id, user_id, kind, target_id, payload, idempotency_key)
     values (v_ws, p_notebook, p_user, 'investigation_crosscheck', null,
       jsonb_build_object('requested_by', p_user), p_idempotency_key)
+<<<<<<< HEAD
     returning id into v_job;
+=======
+    on conflict (idempotency_key) do nothing
+    returning id into v_job;
+  if v_job is null then
+    select id into v_job from public.jobs where idempotency_key = p_idempotency_key;
+    return v_job;
+  end if;
+>>>>>>> 8d32174cb72a8c0569c39cc488598fa5f89d530f
   v_usage := public.reserve_usage(v_ws, p_user, 'investigation_crosscheck', v_job);
   update public.jobs set usage_id = v_usage where id = v_job;
   return v_job;
@@ -269,3 +278,17 @@ revoke execute on function public.queue_investigation_extract_jobs(uuid, uuid, j
   public.queue_investigation_crosscheck_job(uuid, uuid, text) from public, anon, authenticated;
 grant execute on function public.queue_investigation_extract_jobs(uuid, uuid, jsonb),
   public.queue_investigation_crosscheck_job(uuid, uuid, text) to service_role;
+<<<<<<< HEAD
+=======
+
+-- Coûts par défaut appliqués aussi aux workspaces déjà provisionnés.
+update public.plans
+set limits = jsonb_set(
+  limits,
+  '{credit_cost}',
+  coalesce(limits -> 'credit_cost', '{}'::jsonb)
+    || '{"investigation_extract":1,"investigation_crosscheck":5}'::jsonb,
+  true
+),
+updated_at = now();
+>>>>>>> 8d32174cb72a8c0569c39cc488598fa5f89d530f

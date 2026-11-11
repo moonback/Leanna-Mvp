@@ -108,9 +108,13 @@ RECORDS_JSON: " + JSON.stringify(input),
       if (support.length === 0 || distinctSources.size < 2 || evidence.length < 2) continue;
       const primary = support[0];
       const counterEvidence = evidence.filter((item) => item.item.role === "contrary")
+<<<<<<< HEAD
         .map((item) => `${item.item.quote} [source ${item.record.source_id}]`).join("
 
 ").slice(0, 4000);
+=======
+        .map((item) => `${item.item.quote} [source ${item.record.source_id}]`).join("\n\n").slice(0, 4000);
+>>>>>>> 8d32174cb72a8c0569c39cc488598fa5f89d530f
       const evidenceKey = evidence.map((item) => `${item.record.id}:${item.item.role}:${item.item.quote}`).sort();
       const extractionKey = hash([job.notebook_id, candidate.title, ...evidenceKey]);
       const { data: lead, error: leadError } = await db.from("investigation_leads").upsert({

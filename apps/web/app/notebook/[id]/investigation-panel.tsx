@@ -11,7 +11,11 @@ import { toast } from "@/components/ui/toast";
 type Source = { id: string; title: string; status: string };
 type Common = { id: string; source_id: string; context_excerpt?: string; page_number?: number | null; verification_status?: string; origin?: "manual" | "ai_extracted" };
 type Entity = Common & { entity_type: string; label: string };
+<<<<<<< HEAD
 type EventRecord = Common & { title: string; description: string; original_date_text: string; date_precision: string };
+=======
+type EventRecord = Common & { title: string; description: string; original_date_text: string; date_precision: string; occurred_at_start?: string | null; occurred_at_end?: string | null };
+>>>>>>> 8d32174cb72a8c0569c39cc488598fa5f89d530f
 type Statement = Common & { statement_type: string; content: string; speaker_label?: string | null };
 type Lead = Common & { title: string; verification_question: string; supporting_excerpt: string; counter_evidence: string; next_check: string; confidence: string; status: string };
 type ExtractionJob = { id: string; kind: string; target_id: string | null; status: string; progress: number; stage: string | null; error_code: string | null; result: Record<string, unknown> | null; created_at: string };
@@ -142,6 +146,14 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
   const status = (value?: string) => <Badge tone={value === "verified" || value === "validated" ? "success" : value === "rejected" ? "danger" : "neutral"}>{statusLabel[value ?? "unverified"] ?? value}</Badge>;
   const excerpt = (value?: string) => value ? <p className="mt-2 whitespace-pre-wrap rounded-md bg-surface-secondary p-2 text-xs text-text-muted">« {value} »</p> : null;
 
+<<<<<<< HEAD
+=======
+  const timelineEvents = [...data.events].sort((a, b) => {
+    const left = a.occurred_at_start ? Date.parse(a.occurred_at_start) : Number.POSITIVE_INFINITY;
+    const right = b.occurred_at_start ? Date.parse(b.occurred_at_start) : Number.POSITIVE_INFINITY;
+    return left - right;
+  });
+>>>>>>> 8d32174cb72a8c0569c39cc488598fa5f89d530f
   const recordSourceCount = new Set([...data.entities, ...data.events, ...data.statements].map((record) => record.source_id)).size;
   const records = [
     ...data.entities.map((x) => ({ id:x.id, kind:"entity" as const, title:x.label, subtitle:`${typeLabel[x.entity_type]} · ${x.origin === "ai_extracted" ? "Extrait par IA" : "Ajout manuel"}`, source_id:x.source_id, page:x.page_number, excerpt:x.context_excerpt, status:x.verification_status })),
@@ -223,6 +235,34 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
         {error && <div className="flex items-center justify-between rounded-md border border-danger/30 p-3 text-sm"><span>Impossible de charger les éléments.</span><Button size="sm" variant="secondary" onClick={() => void load()}><RefreshCw aria-hidden /> Réessayer</Button></div>}
         {loading ? <p className="py-6 text-center text-sm text-text-muted">Chargement du dossier…</p> : <>
           <section className="grid gap-2">
+<<<<<<< HEAD
+=======
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold">Chronologie documentaire ({timelineEvents.length})</h3>
+              <span className="text-xs text-text-muted">Dates non normalisées conservées telles quelles</span>
+            </div>
+            {timelineEvents.length === 0 ? <p className="rounded-lg border border-dashed p-4 text-sm text-text-muted">Aucun événement structuré. Les événements extraits ou ajoutés apparaîtront ici, avec leur date originale et leur source.</p> : timelineEvents.map((event) => (
+              <article key={event.id} className="relative grid grid-cols-[auto_1fr] gap-3 rounded-lg border border-border p-3">
+                <div className="mt-1 flex size-7 items-center justify-center rounded-full bg-surface-secondary text-xs font-semibold">{event.occurred_at_start ? "●" : "?"}</div>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-medium">{event.original_date_text}</p>
+                    {status(event.verification_status)}
+                  </div>
+                  {event.occurred_at_start && <p className="mt-0.5 text-xs text-text-muted">Date normalisée : {new Date(event.occurred_at_start).toLocaleString()}{event.occurred_at_end ? ` — ${new Date(event.occurred_at_end).toLocaleString()}` : ""}</p>}
+                  <h4 className="mt-1 text-sm">{event.title}</h4>
+                  <p className="mt-1 text-xs text-text-muted">{event.description}</p>
+                  {excerpt(event.context_excerpt)}
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs text-text-muted">Précision : {({exact:"exacte",approximate:"approximative",range:"intervalle",unknown:"inconnue"} as Record<string,string>)[event.date_precision] ?? "non précisée"}</span>
+                    {sourceRef(event.source_id,event.page_number)}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </section>
+          <section className="grid gap-2">
+>>>>>>> 8d32174cb72a8c0569c39cc488598fa5f89d530f
             <h3 className="text-sm font-semibold">Éléments documentés ({records.length})</h3>
             {records.length === 0 ? <EmptyState icon={<FileText />} title="Aucun élément structuré">Ajoutez une personne mentionnée, un événement ou une déclaration en la reliant à sa source.</EmptyState> : records.map((r) => (
               <article key={r.id} className="rounded-lg border border-border p-3">
