@@ -35,6 +35,7 @@ Les événements existants (investigation_events) restent des assertions propres
 - Une contradiction exige au moins deux déclarations issues de deux sources distinctes.
 - Chaque citation de contradiction doit être retrouvée dans le texte de la source.
 - Une filiation documentaire est orientée original → dérivé ; les cycles sont refusés en base.
+- Le worker de recoupement calcule les familles documentaires par composantes de filiation : deux copies, traductions ou dérivés reliés ne comptent que comme une seule origine indépendante. Une piste exige au moins deux familles distinctes.
 - Les tables sont protégées par RLS. Les clients authentifiés ont un accès en lecture selon leur rôle ; les écritures passent par les API après contrôle de rôle.
 - Les revues sont journalisées dans audit_log.
 
@@ -66,7 +67,7 @@ Le formulaire de relation n'est accessible qu'à partir de nœuds canoniques con
 
 ## Limites de cette première livraison
 
-- Les candidats de relations et de contradictions sont créés manuellement via l'API ; la détection automatique par IA n'est pas activée.
+- Les candidats de relations et de contradictions sont créés manuellement depuis l'interface ou l'API ; la détection automatique des contradictions par IA n'est pas activée.
 - La filiation doit être déclarée par un éditeur ; l'empreinte de contenu et la détection automatique des copies restent à construire.
 - La chronologie affiche les assertions d'événement existantes ; la fusion sémantique d'événements similaires n'est pas automatique.
 - Le rendu du graphe utilise une disposition locale simple ; le clustering visuel, la recherche, le zoom et la pagination des grands graphes restent à améliorer.
