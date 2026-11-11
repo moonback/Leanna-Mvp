@@ -297,7 +297,7 @@ create trigger touch_updated_at before update on public.investigation_relations
 create trigger touch_updated_at before update on public.investigation_contradictions
   for each row execute function private.touch_updated_at();
 
-do$do$
+do $do$
 declare
   t text;
 begin
@@ -315,4 +315,5 @@ begin
     execute format('grant select on public.%I to authenticated', t);
     execute format('grant all on public.%I to service_role', t);
   end loop;
-end$do$;
+end;
+$do$;
