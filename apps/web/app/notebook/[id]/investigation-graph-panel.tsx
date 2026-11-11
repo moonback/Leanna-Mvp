@@ -102,7 +102,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
     } finally { setCreatingRelation(false); }
   };
 
-  const review = async (kind: "cluster" | "relation", recordId: string, status: "confirmed" | "rejected") => {
+  const review = async (kind: "cluster" | "relation" | "contradiction", recordId: string, status: "confirmed" | "rejected") => {
     try {
       const response = await fetch(`/api/v1/notebooks/${notebookId}/investigation/graph/${kind}/${recordId}`, {
         method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ status }),
@@ -266,7 +266,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
                         </div>
                       ))}
                     </div>
-                    {canEdit && item.status === "proposed" && <div className="mt-3 flex gap-2"><Button size="sm" variant="secondary" onClick={() => void review("relation",item.id,"confirmed")}>Confirmer</Button></div>}
+                    {canEdit && item.status === "proposed" && <div className="mt-3 flex gap-2"><Button size="sm" variant="secondary" onClick={() => void review("contradiction",item.id,"resolved")}>Marquer comme résolue</Button></div>}
                   </div>
                 ))}
               </section>
