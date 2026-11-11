@@ -41,6 +41,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
   const [loading, setLoading] = React.useState(true);
   const [view, setView] = React.useState<View>("graph");
   const [creatingNode, setCreatingNode] = React.useState<string | null>(null);
+  const [linkTargets, setLinkTargets] = React.useState<Record<string,string>>({});
   const [creatingRelation, setCreatingRelation] = React.useState(false);
   const [subjectId, setSubjectId] = React.useState("");
   const [objectId, setObjectId] = React.useState("");
@@ -67,12 +68,12 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
   const confirmedClusters = data.clusters.filter((cluster) => cluster.status === "confirmed");
   const evidenceFor = (relationId: string) => data.relationEvidence.filter((item) => item.relation_id === relationId);
 
-  const createNode = async (entity: EntityRecord) => {
+  const createNode = async (entity: EntityRecord, clusterId?: string) => {
     setCreatingNode(entity.id);
     try {
       const response = await fetch(`/api/v1/notebooks/${notebookId}/investigation/graph`, {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ entity_id: entity.id, canonical_label: entity.label, match_rationale: "Nœud candidat créé à partir d'une mention source. Identité non confirmée." }),
+        body: JSON.stringify({ entity_id: entity.id, ...(clusterId ? { cluster_id: clusterId } : { canonical_label: entity.label }), match_rationale: clusterId ? "Rapprochement proposé par un éditeur ; validation explicite requise." : "Nœud candidat créé à partir d'une mention source. Identité non confirmée." }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? "node_create_failed");
@@ -198,7 +199,15 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
                           <div className="truncate text-sm">{entity.label}</div>
                           <div className="truncate text-xs text-text-muted">{entityLabels[entity.entity_type]} · {sourceTitle(entity.source_id)}{entity.page_number ? ` · p. ${entity.page_number}` : ""}</div>
                         </div>
-                        <Button size="sm" variant="secondary" disabled={creatingNode === entity.id} onClick={() => void createNode(entity)}>{creatingNode === entity.id ? "Création…" : "Créer le nœud"}</Button>
+                        <div className="flex flex-wrap items-center gap-1">
+  {data.clusters.some((cluster) => cluster.entity_type === entity.entity_type && cluster.status !== "rejected") && <>
+    <select aria-label="Rattacher à un nœud existant" value={linkTargets[entity.id] ?? ""} onChange={(event) => setLinkTargets((old) => ({ ...old, [entity.id]: event.target.value }))} className="h-8 max-w-40 rounded-md border border-border bg-surface px-2 text-xs">
+      <option value="">Rattacher à…</option>{data.clusters.filter((cluster) => cluster.entity_type === entity.entity_type && cluster.status !== "rejected").map((cluster) => <option key={cluster.id} value={cluster.id}>{cluster.canonical_label}</option>)}
+    </select>
+    <Button size="sm" variant="secondary" disabled={creatingNode === entity.id || !linkTargets[entity.id]} onClick={() => void createNode(entity, linkTargets[entity.id])}>Rattacher</Button>
+  </>}
+  <Button size="sm" variant="secondary" disabled={creatingNode === entity.id} onClick={() => void createNode(entity)}>{creatingNode === entity.id ? "Création…" : "Créer le nœud"}</Button>
+</div>
                       </div>
                     ))}
                   </div>
