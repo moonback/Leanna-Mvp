@@ -15,6 +15,7 @@ type Relation = { id: string; subject_cluster_id: string; object_cluster_id: str
 type RelationEvidence = { id: string; relation_id: string; source_id: string; evidence_role: string; quote: string; page_number: number | null };
 type EventRecord = { id: string; source_id: string; title: string; description: string; original_date_text: string; occurred_at_start: string | null; occurred_at_end: string | null; date_precision: string; context_excerpt: string; page_number: number | null; verification_status: string };
 type SourceLineage = { id: string; parent_source_id: string; child_source_id: string; lineage_type: string; note: string | null };
+type StatementRecord = { id: string; source_id: string; statement_type: string; content: string; speaker_label: string | null; context_excerpt: string; page_number: number | null; verification_status: string };
 type Contradiction = { id: string; title: string; description: string; status: string };
 type ContradictionEvidence = { id: string; contradiction_id: string; statement_id: string; source_id: string; position: string; quote: string; page_number: number | null };
 type GraphData = {
@@ -27,10 +28,11 @@ type GraphData = {
   contradictions: Contradiction[];
   contradictionEvidence: ContradictionEvidence[];
   events: EventRecord[];
+  statements: StatementRecord[];
 };
 type View = "graph" | "timeline" | "contradictions" | "provenance";
 
-const empty: GraphData = { clusters: [], mentions: [], entityRecords: [], relations: [], relationEvidence: [], sourceLineage: [], contradictions: [], contradictionEvidence: [], events: [] };
+const empty: GraphData = { clusters: [], mentions: [], entityRecords: [], relations: [], relationEvidence: [], sourceLineage: [], contradictions: [], contradictionEvidence: [], events: [], statements: [] };
 const entityLabels: Record<string,string> = { person: "Personne", place: "Lieu", vehicle: "Véhicule", object: "Objet", organization: "Organisation" };
 const relationLabels: Record<string,string> = { knows: "connaît", reported_about: "a déclaré au sujet de", seen_at: "aurait été vu à", located_at: "situé à", travelled_in: "aurait voyagé dans", owns: "posséderait", uses: "aurait utilisé", works_for: "travaillerait pour", related_to: "serait lié à", present_with: "aurait été présent avec", contacted: "aurait contacté", mentioned_with: "mentionné avec", other: "relation à préciser" };
 
@@ -48,6 +50,18 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
   const [sourceId, setSourceId] = React.useState("");
   const [relationType, setRelationType] = React.useState("seen_at");
   const [quote, setQuote] = React.useState("");
+  const [lineageParent, setLineageParent] = React.useState("");
+  const [lineageChild, setLineageChild] = React.useState("");
+  const [lineageType, setLineageType] = React.useState("copy");
+  const [lineageNote, setLineageNote] = React.useState("");
+  const [contradictionTitle, setContradictionTitle] = React.useState("");
+  const [contradictionDescription, setContradictionDescription] = React.useState("");
+  const [statementA, setStatementA] = React.useState("");
+  const [statementB, setStatementB] = React.useState("");
+  const [quoteA, setQuoteA] = React.useState("");
+  const [quoteB, setQuoteB] = React.useState("");
+  const [savingLineage, setSavingLineage] = React.useState(false);
+  const [savingContradiction, setSavingContradiction] = React.useState(false);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -101,6 +115,50 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
     } catch (error) {
       toast({ title: "Relation non enregistrée", description: error instanceof Error ? error.message : "relation_create_failed", tone: "error" });
     } finally { setCreatingRelation(false); }
+  };
+
+  const createLineage = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!lineageParent || !lineageChild || lineageParent === lineageChild) return;
+    setSavingLineage(true);
+    try {
+      const response = await fetch("/api/v1/notebooks/" + notebookId + "/investigation/graph/lineage", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ parent_source_id: lineageParent, child_source_id: lineageChild, lineage_type: lineageType, note: lineageNote || undefined }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? "lineage_create_failed");
+      setLineageNote("");
+      toast({ title: "Filiation documentaire enregistrée", description: "Le lien original → dérivé est conservé dans le dossier.", tone: "success" });
+      await load();
+    } catch (error) {
+      toast({ title: "Filiation non enregistrée", description: error instanceof Error ? error.message : "lineage_create_failed", tone: "error" });
+    } finally { setSavingLineage(false); }
+  };
+
+  const createContradiction = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!statementA || !statementB || statementA === statementB || !quoteA.trim() || !quoteB.trim()) return;
+    setSavingContradiction(true);
+    try {
+      const response = await fetch("/api/v1/notebooks/" + notebookId + "/investigation/graph/contradictions", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          title: contradictionTitle, description: contradictionDescription,
+          evidence: [
+            { statement_id: statementA, position: "conflicts", quote: quoteA },
+            { statement_id: statementB, position: "conflicts", quote: quoteB },
+          ],
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? "contradiction_create_failed");
+      setContradictionTitle(""); setContradictionDescription(""); setStatementA(""); setStatementB(""); setQuoteA(""); setQuoteB("");
+      toast({ title: "Contradiction proposée", description: "Les deux déclarations et leurs sources sont conservées séparément.", tone: "success" });
+      await load();
+    } catch (error) {
+      toast({ title: "Contradiction non enregistrée", description: error instanceof Error ? error.message : "contradiction_create_failed", tone: "error" });
+    } finally { setSavingContradiction(false); }
   };
 
   const review = async (kind: "cluster" | "mention" | "relation" | "contradiction", recordId: string, status: "confirmed" | "rejected" | "resolved") => {
