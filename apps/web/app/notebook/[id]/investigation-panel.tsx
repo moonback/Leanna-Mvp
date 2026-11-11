@@ -21,8 +21,8 @@ type Kind = "entity" | "event" | "statement" | "lead";
 
 const empty: Data = { entities: [], events: [], statements: [], leads: [], leadEvidence: [], extractionJobs: [] };
 const statusLabel: Record<string,string> = {
-  unverified: "Non vérifié", under_review: "À examiner", verified: "Vérifié", rejected: "Rejeté",
-  proposed: "Proposée", in_review: "En revue", validated: "Validée", closed: "Clôturée",
+  unverified: "Non vérifié", under_review: "À examiner", verified: "Extrait vérifié", rejected: "Rejeté",
+  proposed: "Proposée", in_review: "En revue", validated: "Retenue pour vérification", closed: "Clôturée",
   queued: "En attente", running: "En cours", succeeded: "Terminé", failed: "Échec",
 };
 const typeLabel: Record<string,string> = {
@@ -229,7 +229,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
               <article key={r.id} className="rounded-lg border border-border p-3">
                 <div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="text-sm font-medium">{r.title}</p><p className="mt-0.5 text-xs text-text-muted">{r.subtitle}</p></div>{status(r.status)}</div>
                 {excerpt(r.excerpt)}
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">{sourceRef(r.source_id,r.page)}{canEdit && r.status !== "verified" && r.status !== "rejected" && <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={()=>void review(r.kind,r.id,"verified")}><Check aria-hidden /> Valider</Button><Button size="sm" variant="ghost" onClick={()=>void review(r.kind,r.id,"rejected")}><X aria-hidden /> Rejeter</Button></span>}</div>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">{sourceRef(r.source_id,r.page)}{canEdit && r.status !== "verified" && r.status !== "rejected" && <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={()=>void review(r.kind,r.id,"verified")}><Check aria-hidden /> Vérifier l’extrait</Button><Button size="sm" variant="ghost" onClick={()=>void review(r.kind,r.id,"rejected")}><X aria-hidden /> Rejeter</Button></span>}</div>
               </article>
             ))}
           </section>
@@ -246,7 +246,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
                   <p className="mt-1 whitespace-pre-wrap text-xs text-text-muted">« {item.quote} »</p>
                 </div>)} 
                 <p className="mt-2 text-xs text-text-muted">Solidité documentaire : {lead.confidence === "high" ? "élevée" : lead.confidence === "moderate" ? "modérée" : "faible"}. Vérification proposée : {lead.next_check}</p>
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">{sourceRef(lead.source_id,lead.page_number)}{canEdit && lead.status !== "validated" && lead.status !== "rejected" && <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={()=>void review("lead",lead.id,"validated")}><Check aria-hidden /> Valider</Button><Button size="sm" variant="ghost" onClick={()=>void review("lead",lead.id,"rejected")}><X aria-hidden /> Rejeter</Button></span>}</div>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">{sourceRef(lead.source_id,lead.page_number)}{canEdit && lead.status !== "validated" && lead.status !== "rejected" && <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={()=>void review("lead",lead.id,"validated")}><Check aria-hidden /> Retenir la piste</Button><Button size="sm" variant="ghost" onClick={()=>void review("lead",lead.id,"rejected")}><X aria-hidden /> Rejeter</Button></span>}</div>
               </article>
             ))}
           </section>
