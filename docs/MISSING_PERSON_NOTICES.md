@@ -15,9 +15,10 @@ Les connecteurs automatiques, flux officiels ou accords de données devront êtr
 
 ## Cycle de vie
 
-- Une fiche créée est `pending_review`.
+- Une fiche créée est `pending_review` et sa publication est `unverified`.
 - Un éditeur peut l'approuver ou l'écarter.
-- Le statut de publication peut être `active`, `changed`, `removed` ou `unavailable`.
+- Un éditeur confirme manuellement la publication avant de la marquer `active` ; les statuts `changed`, `removed` ou `unavailable` sont distincts.
+- La date de dernière vérification positive n'est actualisée qu'après cette confirmation manuelle.
 - L'absence d'une publication ne signifie jamais que la personne a été retrouvée.
 - Les révisions de métadonnées conservent un instantané JSON et une empreinte SHA-256.
 - Les notices et révisions sont isolées par notebook via RLS ; les écritures passent par des routes authentifiées avec rôle éditeur et journal d'audit.
