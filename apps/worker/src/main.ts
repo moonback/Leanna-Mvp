@@ -10,6 +10,7 @@ import { guideHandler, overviewHandler } from "./studio/summaries.ts";
 import { researchHandler } from "./research/handler.ts";
 import { transcriberFromEnv } from "./ai/transcription.ts";
 import { speechFromEnv } from "./ai/speech.ts";
+import { investigationExtractHandler } from "./investigation/extract.ts";
 
 const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -32,6 +33,7 @@ if (!transcriber) console.warn("DEEPGRAM_API_KEY absent : import audio désactiv
 const handlers: Partial<Record<JobKind, Handler>> = {
   ingest_source: ingestHandler(db, embedder, { summaries: Boolean(llm), transcriber }),
   research: researchHandler(db, process.env.TAVILY_API_KEY),
+  ...(llm ? { investigation_extract: investigationExtractHandler(db, llm) } : {}),
   generate_artifact: async (job, ctx) => {
     if (job.target_id) {
       const { data: artifact } = await db.from("artifacts").select("id,type,options,custom_prompt,source_ids,notebook_id,workspace_id,created_by").eq("id", job.target_id).single();
