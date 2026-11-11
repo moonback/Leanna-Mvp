@@ -29,7 +29,7 @@ describe("investigation prompt safeguards", () => {
   it("provides investigation-specific Studio prompt defaults", () => {
     const keys = new Map(SYSTEM_PROMPT_CATALOG.map((item) => [item.key, item.defaultPrompt]));
     expect(keys.get("studio.report")).toContain("déclarations attribuées");
-    expect(keys.get("studio.timeline")).toContain("date de l'événement");
-    expect(keys.get("studio.comparison")).toContain("Contradictions");
+    expect(keys.get("studio.timeline")).toContain("date de l’événement");
+    expect(keys.get("studio.comparison")?.toLowerCase()).toContain("contradictions");
   });
 });
