@@ -32,7 +32,7 @@ create table public.missing_person_notices (
 );
 create index missing_person_notices_notebook_idx
   on public.missing_person_notices(notebook_id, review_status, publication_status, created_at desc);
-create index missing_person_notices_hash_idx
+create unique index missing_person_notices_hash_uidx
   on public.missing_person_notices(notebook_id, content_hash);
 
 create table public.missing_person_notice_revisions (
