@@ -26,5 +26,6 @@ describe("investigation extraction", () => {
     const passage = "Le témoin indique : Alice a été vue mardi soir.";
     expect(exactQuoteOffset(passage, "Alice a été vue mardi")).toBeGreaterThanOrEqual(0);
     expect(exactQuoteOffset(passage, "Alice aurait été vue mardi")).toBe(-1);
+    expect(exactQuoteOffset("Alice est partie. Puis Alice est revenue.", "Alice")).toBe(-1);
   });
 });
