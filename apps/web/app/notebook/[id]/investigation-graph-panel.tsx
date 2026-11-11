@@ -341,8 +341,9 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
                 {data.events.length === 0 ? <EmptyState title="Aucun événement extrait" description="Les événements documentaires apparaîtront ici avec leur date originale et leur source." /> : [...data.events].sort((a,b) => (a.occurred_at_start ?? "9999").localeCompare(b.occurred_at_start ?? "9999")).map((event) => (
                   <div key={event.id} className="grid grid-cols-[auto_1fr] gap-3 rounded-lg border border-border p-3">
                     <div className="flex min-w-24 flex-col items-center text-center">
-                      <span className="text-xs font-semibold">{event.occurred_at_start ? new Date(event.occurred_at_start).toLocaleDateString("fr-FR") : "Date inconnue"}</span>
-                      <span className="text-[10px] text-text-muted">{event.date_precision === "exact" ? "Date exacte rapportée" : event.date_precision === "approximate" ? "Période approximative" : event.date_precision === "range" ? "Intervalle" : "Non précisée"}</span>
+                      <span className="text-xs font-semibold">{event.date_precision === "exact" && event.occurred_at_start ? new Date(event.occurred_at_start).toLocaleDateString("fr-FR") : event.original_date_text}</span>
+                      <span className="text-[10px] text-text-muted">{event.date_precision === "exact" ? "Date exacte rapportée" : event.date_precision === "approximate" ? "Repère approximatif" : event.date_precision === "range" ? "Intervalle rapporté" : "Date non normalisée"}</span>
+                      {event.date_precision !== "exact" && event.occurred_at_start && <span className="text-[10px] text-text-muted">Repère technique : {new Date(event.occurred_at_start).toLocaleDateString("fr-FR")}</span>}
                     </div>
                     <div className="min-w-0">
                       <div className="text-sm font-medium">{event.title}</div>
@@ -358,6 +359,20 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
             {view === "contradictions" && (
               <section className="grid gap-2">
                 <h3 className="text-sm font-semibold">Contradictions documentaires</h3>
+                {canEdit && data.statements.length >= 2 && <form onSubmit={createContradiction} className="grid gap-2 rounded-xl border border-border p-3">
+                  <h4 className="text-sm font-medium">Consigner deux déclarations incompatibles</h4>
+                  <input required maxLength={240} value={contradictionTitle} onChange={(event) => setContradictionTitle(event.target.value)} placeholder="Titre de la contradiction" className="h-10 rounded-md border border-border bg-surface px-3 text-sm" />
+                  <textarea required maxLength={3000} value={contradictionDescription} onChange={(event) => setContradictionDescription(event.target.value)} placeholder="Décrire précisément ce qui paraît incompatible, sans trancher…" className="min-h-16 rounded-md border border-border bg-surface px-3 py-2 text-sm" />
+                  <select required value={statementA} onChange={(event) => { const next = data.statements.find((item) => item.id === event.target.value); setStatementA(event.target.value); setQuoteA(next?.context_excerpt ?? ""); if (next?.source_id === data.statements.find((item) => item.id === statementB)?.source_id) { setStatementB(""); setQuoteB(""); } }} className="h-10 rounded-md border border-border bg-surface px-3 text-sm">
+                    <option value="">Première déclaration</option>{data.statements.map((item) => <option key={item.id} value={item.id}>{item.content.slice(0,100)} · {sourceTitle(item.source_id)}</option>)}
+                  </select>
+                  <textarea required value={quoteA} onChange={(event) => setQuoteA(event.target.value)} placeholder="Citation exacte de la première source" className="min-h-16 rounded-md border border-border bg-surface px-3 py-2 text-xs" />
+                  <select required value={statementB} onChange={(event) => { const next = data.statements.find((item) => item.id === event.target.value); setStatementB(event.target.value); setQuoteB(next?.context_excerpt ?? ""); }} className="h-10 rounded-md border border-border bg-surface px-3 text-sm">
+                    <option value="">Déclaration d'une autre source</option>{data.statements.filter((item) => item.source_id !== data.statements.find((entry) => entry.id === statementA)?.source_id).map((item) => <option key={item.id} value={item.id}>{item.content.slice(0,100)} · {sourceTitle(item.source_id)}</option>)}
+                  </select>
+                  <textarea required value={quoteB} onChange={(event) => setQuoteB(event.target.value)} placeholder="Citation exacte de la deuxième source" className="min-h-16 rounded-md border border-border bg-surface px-3 py-2 text-xs" />
+                  <Button type="submit" size="sm" disabled={savingContradiction || !statementA || !statementB || !contradictionTitle.trim() || !contradictionDescription.trim()}>{savingContradiction ? "Enregistrement…" : "Proposer la contradiction"}</Button>
+                </form>}
                 {data.contradictions.length === 0 ? <EmptyState title="Aucune contradiction consignée" description="Les contradictions devront relier des déclarations provenant d'au moins deux sources distinctes." /> : data.contradictions.map((item) => (
                   <div key={item.id} className="rounded-lg border border-border p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="text-sm font-medium">{item.title}</h4><Badge>{item.status === "proposed" ? "À examiner" : item.status}</Badge></div>
@@ -380,6 +395,22 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
             {view === "provenance" && (
               <section className="grid gap-2">
                 <h3 className="text-sm font-semibold">Filiation des documents</h3>
+                {canEdit && sources.filter((source) => source.status === "ready").length >= 2 && <form onSubmit={createLineage} className="grid gap-2 rounded-xl border border-border p-3">
+                  <h4 className="text-sm font-medium">Relier un document dérivé à son origine</h4>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <select required value={lineageParent} onChange={(event) => setLineageParent(event.target.value)} className="h-10 rounded-md border border-border bg-surface px-3 text-sm">
+                      <option value="">Document d'origine</option>{sources.filter((source) => source.status === "ready").map((source) => <option key={source.id} value={source.id}>{source.title}</option>)}
+                    </select>
+                    <select required value={lineageChild} onChange={(event) => setLineageChild(event.target.value)} className="h-10 rounded-md border border-border bg-surface px-3 text-sm">
+                      <option value="">Document dérivé</option>{sources.filter((source) => source.status === "ready").map((source) => <option key={source.id} value={source.id}>{source.title}</option>)}
+                    </select>
+                  </div>
+                  <select value={lineageType} onChange={(event) => setLineageType(event.target.value)} className="h-10 rounded-md border border-border bg-surface px-3 text-sm">
+                    <option value="copy">Copie</option><option value="excerpt">Extrait</option><option value="translation">Traduction</option><option value="transcription">Transcription</option><option value="derived">Document dérivé</option><option value="unknown">Origine incertaine</option>
+                  </select>
+                  <input value={lineageNote} onChange={(event) => setLineageNote(event.target.value)} maxLength={2000} placeholder="Précision facultative sur la filiation" className="h-10 rounded-md border border-border bg-surface px-3 text-sm" />
+                  <Button type="submit" size="sm" disabled={savingLineage || !lineageParent || !lineageChild || lineageParent === lineageChild}>{savingLineage ? "Enregistrement…" : "Enregistrer la filiation"}</Button>
+                </form>}
                 {data.sourceLineage.length === 0 ? <EmptyState title="Aucune filiation enregistrée" description="Les copies, extraits, traductions et transcriptions peuvent être reliés à leur document d'origine pour éviter de compter plusieurs fois une même information." /> : data.sourceLineage.map((lineage) => (
                   <div key={lineage.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-border p-3 text-sm">
                     <button type="button" onClick={() => onOpenSource(lineage.parent_source_id)} className="text-accent hover:underline">{sourceTitle(lineage.parent_source_id)}</button>
