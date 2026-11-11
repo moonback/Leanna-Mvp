@@ -191,3 +191,72 @@ create policy investigation_lead_evidence_read on public.investigation_lead_evid
 revoke insert, update, delete, truncate on public.investigation_lead_evidence from anon, authenticated;
 grant select on public.investigation_lead_evidence to authenticated;
 grant all on public.investigation_lead_evidence to service_role;
+
+
+-- Jobs d'analyse dédiés : réservation de crédits atomique avec la création du job.
+create function public.queue_investigation_extract_jobs(p_notebook uuid, p_user uuid, p_sources jsonb)
+returns integer
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_ws uuid;
+  v_item jsonb;
+  v_source uuid;
+  v_version text;
+  v_job uuid;
+  v_usage uuid;
+  v_count integer := 0;
+begin
+  select workspace_id into v_ws from public.notebooks where id = p_notebook;
+  if v_ws is null then raise exception 'notebook_not_found' using errcode = 'P0002'; end if;
+  if jsonb_typeof(p_sources) <> 'array' or jsonb_array_length(p_sources) = 0 then
+    raise exception 'no_ready_sources' using errcode = 'P0001';
+  end if;
+  for v_item in select value from jsonb_array_elements(p_sources)
+  loop
+    v_source := (v_item ->> 'id')::uuid;
+    v_version := v_item ->> 'version';
+    if v_version is null or not exists (
+      select 1 from public.sources s where s.id = v_source and s.notebook_id = p_notebook
+        and s.workspace_id = v_ws and s.status = 'ready' and s.updated_at::text = v_version
+    ) then
+      raise exception 'source_not_ready_or_changed' using errcode = 'P0001';
+    end if;
+    insert into public.jobs (workspace_id, notebook_id, user_id, kind, target_id, payload, idempotency_key)
+      values (v_ws, p_notebook, p_user, 'investigation_extract', v_source,
+        jsonb_build_object('offset', 0, 'version', v_version, 'requested_by', p_user),
+        'investigation-extract:' || v_source::text || ':' || v_version || ':0')
+      on conflict (idempotency_key) do nothing
+      returning id into v_job;
+    if v_job is not null then
+      v_usage := public.reserve_usage(v_ws, p_user, 'investigation_extract', v_job);
+      update public.jobs set usage_id = v_usage where id = v_job;
+      v_count := v_count + 1;
+    end if;
+    v_job := null;
+  end loop;
+  return v_count;
+end $$;
+
+create function public.queue_investigation_crosscheck_job(p_notebook uuid, p_user uuid, p_idempotency_key text)
+returns uuid
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_ws uuid;
+  v_job uuid;
+  v_usage uuid;
+begin
+  select workspace_id into v_ws from public.notebooks where id = p_notebook;
+  if v_ws is null then raise exception 'notebook_not_found' using errcode = 'P0002'; end if;
+  insert into public.jobs (workspace_id, notebook_id, user_id, kind, target_id, payload, idempotency_key)
+    values (v_ws, p_notebook, p_user, 'investigation_crosscheck', null,
+      jsonb_build_object('requested_by', p_user), p_idempotency_key)
+    returning id into v_job;
+  v_usage := public.reserve_usage(v_ws, p_user, 'investigation_crosscheck', v_job);
+  update public.jobs set usage_id = v_usage where id = v_job;
+  return v_job;
+end $$;
+
+revoke execute on function public.queue_investigation_extract_jobs(uuid, uuid, jsonb),
+  public.queue_investigation_crosscheck_job(uuid, uuid, text) from public, anon, authenticated;
+grant execute on function public.queue_investigation_extract_jobs(uuid, uuid, jsonb),
+  public.queue_investigation_crosscheck_job(uuid, uuid, text) to service_role;
