@@ -17,8 +17,7 @@ const entitySchema = z.object({
   label: z.string().trim().min(1).max(240),
   char_start: z.number().int().nonnegative().nullable().optional(),
   char_end: z.number().int().positive().nullable().optional(),
-}).strict().refine(v => v.char_start == null || v.char_end == null || v.char_end > v.char_start, "Offsets invalides.")
-  .refine(v => v.context_excerpt.includes(v.label), "Le libellé doit apparaître dans l’extrait source.");
+}).strict();
 const eventSchema = z.object({
   kind: z.literal("event"), ...sourceFields,
   title: z.string().trim().min(1).max(240),
