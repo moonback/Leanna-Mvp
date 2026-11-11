@@ -23,6 +23,7 @@ const empty: Data = { entities: [], events: [], statements: [], leads: [], leadE
 const statusLabel: Record<string,string> = {
   unverified: "Non vérifié", under_review: "À examiner", verified: "Vérifié", rejected: "Rejeté",
   proposed: "Proposée", in_review: "En revue", validated: "Validée", closed: "Clôturée",
+  queued: "En attente", running: "En cours", succeeded: "Terminé", failed: "Échec",
 };
 const typeLabel: Record<string,string> = {
   person: "Personne mentionnée", place: "Lieu", vehicle: "Véhicule", object: "Objet", organization: "Organisation",
@@ -141,6 +142,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
   const status = (value?: string) => <Badge tone={value === "verified" || value === "validated" ? "success" : value === "rejected" ? "danger" : "neutral"}>{statusLabel[value ?? "unverified"] ?? value}</Badge>;
   const excerpt = (value?: string) => value ? <p className="mt-2 whitespace-pre-wrap rounded-md bg-surface-secondary p-2 text-xs text-text-muted">« {value} »</p> : null;
 
+  const recordSourceCount = new Set([...data.entities, ...data.events, ...data.statements].map((record) => record.source_id)).size;
   const records = [
     ...data.entities.map((x) => ({ id:x.id, kind:"entity" as const, title:x.label, subtitle:`${typeLabel[x.entity_type]} · ${x.origin === "ai_extracted" ? "Extrait par IA" : "Ajout manuel"}`, source_id:x.source_id, page:x.page_number, excerpt:x.context_excerpt, status:x.verification_status })),
     ...data.events.map((x) => ({ id:x.id, kind:"event" as const, title:x.title, subtitle:`${x.original_date_text} · ${x.origin === "ai_extracted" ? "Extrait par IA" : "Ajout manuel"}`, source_id:x.source_id, page:x.page_number, excerpt:x.context_excerpt, status:x.verification_status })),
@@ -156,7 +158,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
         </div>
         {canEdit && <div className="grid grid-cols-2 gap-2">
           <Button size="sm" variant="secondary" onClick={() => void startExtraction()} disabled={extracting || !sources.some((s) => s.status === "ready")}>{extracting ? "Planification…" : "Analyser les sources"}</Button>
-          <Button size="sm" variant="secondary" onClick={() => void startCrosscheck()} disabled={crosschecking || data.entities.length + data.events.length + data.statements.length < 2}>{crosschecking ? "Planification…" : "Croiser les sources"}</Button>
+          <Button size="sm" variant="secondary" onClick={() => void startCrosscheck()} disabled={crosschecking || recordSourceCount < 2}>{crosschecking ? "Planification…" : "Croiser les sources"}</Button>
         </div>}
         {data.extractionJobs.length > 0 && <section className="grid gap-2">
           <h3 className="text-sm font-semibold">Analyses IA récentes</h3>
@@ -238,7 +240,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
                 <div className="flex items-start justify-between gap-2"><h4 className="text-sm font-semibold">{lead.title}</h4>{status(lead.status)}</div>
                 <p className="mt-2 text-sm">{lead.verification_question}</p>
                 {excerpt(lead.supporting_excerpt)}
-                {lead.counter_evidence && <p className="mt-2 text-xs text-text-muted">Limites / éléments contraires : {lead.counter_evidence}</p>}
+                {lead.counter_evidence && !data.leadEvidence.some((item) => item.lead_id === lead.id && item.evidence_role === "contrary") && <p className="mt-2 text-xs text-text-muted">Limites / éléments contraires : {lead.counter_evidence}</p>}
                 {data.leadEvidence.filter((item) => item.lead_id === lead.id).map((item) => <div key={item.id} className="mt-2 rounded-md bg-surface-secondary p-2">
                   <div className="flex items-center justify-between gap-2 text-xs"><span className="font-medium">{item.evidence_role === "support" ? "Élément à l’appui" : "Élément contraire"}</span>{sourceRef(item.source_id,item.page_number)}</div>
                   <p className="mt-1 whitespace-pre-wrap text-xs text-text-muted">« {item.quote} »</p>
