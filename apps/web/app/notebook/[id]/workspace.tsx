@@ -278,7 +278,7 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
       )}
 
       {/* Bureau : Sources et Studio se replient indépendamment. Mobile : navigation par onglets. */}
-      {role === "chat" ? <div className="min-h-0 flex-1 p-2 sm:p-3">{chatPanel}</div> : desktop ? (
+      {role === "chat" ? <div className="min-h-0 flex-1 p-2 sm:p-3">{mainPanel}</div> : desktop ? (
         <div
           className="grid min-h-0 min-w-0 flex-1 gap-2 p-3"
           style={{
@@ -353,7 +353,7 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
             />
           )}
 
-          {chatPanel}
+          {mainPanel}
 
           {wideDesktop && !studioCollapsed && (
             <div
