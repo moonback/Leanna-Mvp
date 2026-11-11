@@ -33,7 +33,7 @@ type EvidenceRecord = {
 };
 
 export function parseCrosscheck(text: string): z.infer<typeof schema> {
-  const cleaned = text.trim().replace(/^\`\`\`(?:json)?\s*/i, "").replace(/\s*\`\`\`$/, "");
+  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
   return schema.parse(JSON.parse(cleaned));
 }
 
