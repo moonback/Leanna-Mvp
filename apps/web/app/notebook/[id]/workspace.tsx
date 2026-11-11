@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { AlertTriangle, ArrowUp, AudioLines, BookmarkPlus, Eraser, Settings2, ThumbsDown, ThumbsUp, FileText, Globe, Inbox, Lock, NotebookPen, Pencil, Plus, Square, Sparkles, Trash2, Type, Upload, Search, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, FolderOpen } from "lucide-react";
+import { AlertTriangle, ArrowUp, AudioLines, BookmarkPlus, Eraser, Settings2, ThumbsDown, ThumbsUp, FileText, Globe, Inbox, Lock, NotebookPen, Pencil, Plus, Square, Sparkles, Trash2, Type, Upload, Search, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, FolderOpen, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { Alert, Badge, EmptyState, Progress, Skeleton } from "@/components/ui/feedback";
@@ -17,6 +17,7 @@ import { NotebookActionsMenu } from "./notebook-actions-menu";
 import { FastResearch } from "./fast-research";
 import { VoiceAssistant } from "./voice-assistant";
 import type { NumberedVoicePassage } from "./voice-turn";
+import { InvestigationPanel } from "./investigation-panel";
 
 export type Role = "chat" | "viewer" | "editor" | "owner";
 type Source = { id: string; kind: string; title: string; status: string; error_code: string | null; word_count: number | null };
@@ -72,6 +73,7 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
   const [noteEditor, setNoteEditor] = React.useState<{ id?: string } | null>(null);
   const [renaming, setRenaming] = React.useState<Source | null>(null);
   const [mobileTab, setMobileTab] = React.useState("chat");
+  const [mainView, setMainView] = React.useState<"chat" | "investigation">("chat");
   const [draft, setDraft] = React.useState<{ text: string } | null>(null); // question pré-remplie depuis le Studio
   const desktop = useMediaQuery("(min-width: 1024px)");
   const wideDesktop = useMediaQuery("(min-width: 1280px)");
@@ -201,7 +203,7 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
           {[0, 1, 2].map((i) => <div key={i} className="flex gap-3"><Skeleton className="size-7" /><Skeleton className="h-4 flex-1" /></div>)}
         </div>
       ) : role === "chat" ? (
-        <p className="p-4 text-sm text-text-muted">Les sources de ce notebook ne sont pas consultables avec votre lien. Vous pouvez poser des questions.</p>
+        <p className="p-4 text-sm text-text-muted">Les sources de ce dossier ne sont pas consultables avec votre lien. Vous pouvez poser des questions.</p>
       ) : sources.length === 0 ? (
         <EmptyState icon={<Inbox />} title="Aucune source" action={canEdit && <Button onClick={() => setAdding(true)}><Plus aria-hidden /> Ajouter des sources</Button>}>
           Importez un PDF, une page web ou un texte : les réponses citeront ces documents.
@@ -247,6 +249,9 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
   const titles = new Map((sources ?? []).map((s) => [s.id, s.title]));
   const chatPanel = <Chat notebookId={notebookId} readyCount={role === "chat" ? (overview?.readySources ?? 0) : selectedCount} sourceTitle={(id) => titles.get(id)} canSaveNote={canEdit} onNoteSaved={() => void load()} onOpenCitation={(c) => setViewer({ sourceId: c.source_id, range: [c.char_start, c.char_end] })} onOpenPassage={(p) => setViewer({ sourceId: p.sourceId, range: [p.charStart, p.charEnd], timeStartMs: p.timeStartMs ?? undefined })} canViewSources={role !== "chat"} draft={draft} canConfigure={canEdit} overview={overview} />;
 
+  const investigationPanel = <InvestigationPanel notebookId={notebookId} canEdit={canEdit} sources={sources ?? []} onOpenSource={(sourceId) => setViewer({ sourceId })} />;
+  const mainPanel = mainView === "investigation" ? investigationPanel : chatPanel;
+
   const studioPanel = (
     <Studio notebookId={notebookId} canEdit={canEdit} sourceIds={ready.filter((s) => !deselected.has(s.id)).map((s) => s.id)} sourceTitle={(id) => titles.get(id)}
       onOpenCitation={role !== "chat" ? (c) => setViewer({ sourceId: c.source_id, range: [c.char_start, c.char_end] }) : undefined}
@@ -258,19 +263,22 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
       {confirmDialog}
       {titleSlot && createPortal(
         canEdit ? (
-          <input aria-label="Titre du notebook" defaultValue={title} placeholder="Notebook sans titre" maxLength={200}
+          <input aria-label="Titre du dossier" defaultValue={title} placeholder="Dossier sans titre" maxLength={200}
             onBlur={(e) => void rename(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
             className="min-w-0 max-w-md flex-1 truncate rounded-md bg-transparent px-2 py-1 text-base font-semibold hover:bg-surface focus-visible:bg-surface" />
-        ) : <h1 className="truncate text-base font-semibold">{title || "Notebook sans titre"}</h1>,
+        ) : <h1 className="truncate text-base font-semibold">{title || "Dossier sans titre"}</h1>,
         titleSlot,
       )}
       {actionsSlot && createPortal(
-        <NotebookActionsMenu notebookId={notebookId} allowCopies={allowCopies} canCopy={role === "owner" || (role !== "chat" && allowCopies)} canShare={role === "owner"} />,
+        <div className="flex items-center gap-2">
+          {desktop && role !== "chat" && <Button size="sm" variant={mainView === "investigation" ? "soft" : "secondary"} onClick={() => setMainView((v) => v === "chat" ? "investigation" : "chat")}><ClipboardList aria-hidden />{mainView === "investigation" ? "Retour au chat" : "Enquête"}</Button>}
+          <NotebookActionsMenu notebookId={notebookId} allowCopies={allowCopies} canCopy={role === "owner" || (role !== "chat" && allowCopies)} canShare={role === "owner"} />
+        </div>,
         actionsSlot,
       )}
 
       {/* Bureau : Sources et Studio se replient indépendamment. Mobile : navigation par onglets. */}
-      {role === "chat" ? <div className="min-h-0 flex-1 p-2 sm:p-3">{chatPanel}</div> : desktop ? (
+      {role === "chat" ? <div className="min-h-0 flex-1 p-2 sm:p-3">{mainPanel}</div> : desktop ? (
         <div
           className="grid min-h-0 min-w-0 flex-1 gap-2 p-3"
           style={{
@@ -345,7 +353,7 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
             />
           )}
 
-          {chatPanel}
+          {mainPanel}
 
           {wideDesktop && !studioCollapsed && (
             <div
@@ -406,8 +414,8 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
             <TabsContent value="chat" className="h-full">{chatPanel}</TabsContent>
             <TabsContent value="studio" className="h-full">{studioPanel}</TabsContent>
           </div>
-          <TabsList aria-label="Panneaux" className="grid h-14 shrink-0 grid-cols-3 border-t bg-surface-raised px-2">
-            <TabsTrigger value="sources">Sources</TabsTrigger><TabsTrigger value="chat">Chat</TabsTrigger><TabsTrigger value="studio">Studio</TabsTrigger>
+          <TabsList aria-label="Panneaux" className="grid h-14 shrink-0 grid-cols-4 border-t bg-surface-raised px-2">
+            <TabsTrigger value="sources">Sources</TabsTrigger><TabsTrigger value="chat">Chat</TabsTrigger><TabsTrigger value="investigation">Enquête</TabsTrigger><TabsTrigger value="studio">Studio</TabsTrigger>
           </TabsList>
         </Tabs>
       )}
