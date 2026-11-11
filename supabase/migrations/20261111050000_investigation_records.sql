@@ -20,7 +20,7 @@ alter table public.investigation_statements
   add column origin text not null default 'manual' check (origin in ('manual','ai_extracted')),
   add column extraction_key text;
 
-create unique index investigation_entities_extraction_uq on public.investigation_entities(extraction_key) where extraction_key is not null;
+create unique index investigation_entities_extraction_uq on public.investigation_entities(extraction_key);
 create unique index investigation_events_extraction_uq on public.investigation_events(extraction_key) where extraction_key is not null;
 create unique index investigation_statements_extraction_uq on public.investigation_statements(extraction_key) where extraction_key is not null;
 
