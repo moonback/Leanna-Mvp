@@ -26,14 +26,14 @@ const eventSchema = z.object({
   occurred_at_start: z.string().datetime({ offset: true }).nullable().optional(),
   occurred_at_end: z.string().datetime({ offset: true }).nullable().optional(),
   date_precision: z.enum(["exact","approximate","range","unknown"]),
-}).strict();
+}).strict().refine(v => !v.occurred_at_start || !v.occurred_at_end || new Date(v.occurred_at_end) >= new Date(v.occurred_at_start), "Intervalle de dates invalide.");
 const statementSchema = z.object({
   kind: z.literal("statement"), ...sourceFields,
   statement_type: z.enum(["documented_fact","testimony","unverified_information","hypothesis","contradiction"]),
   content: z.string().trim().min(1).max(5000),
   speaker_label: z.string().trim().max(240).nullable().optional(),
   recorded_at: z.string().datetime({ offset: true }).nullable().optional(),
-}).strict();
+}).strict().refine(v => !v.speaker_label || v.context_excerpt.includes(v.speaker_label), "L’attribution doit apparaître dans l’extrait source.");
 const leadSchema = z.object({
   kind: z.literal("lead"), source_id: uuid,
   title: z.string().trim().min(1).max(240),
