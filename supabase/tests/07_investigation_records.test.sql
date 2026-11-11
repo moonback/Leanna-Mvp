@@ -79,6 +79,10 @@ select is(
   0, 'la même version de source ne crée pas un second job'
 );
 select is(
+  (select count(*)::int from public.usage_ledger where feature = 'investigation_extract' and status = 'reserved'),
+  1, 'un seul crédit est réservé pour une extraction idempotente'
+);
+select is(
   (select id from (select public.queue_investigation_crosscheck_job(
     '22222222-2222-2222-2222-222222222222',
     '00000000-0000-0000-0000-00000000000a',
