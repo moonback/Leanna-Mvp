@@ -3,7 +3,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseHTML } from "linkedom";
 
 const SOURCE = "116000";
-const FEED_URL = "https://www.116000enfantsdisparus.fr/feed/";
 const SYNC_INTERVAL_MS = 15 * 60_000;
 const MAX_FEED_BYTES = 2_000_000;
 
