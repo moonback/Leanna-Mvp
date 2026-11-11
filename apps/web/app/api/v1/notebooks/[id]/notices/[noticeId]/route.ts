@@ -19,11 +19,14 @@ export const PATCH = handle(async (req: NextRequest, { params }: Params) => {
   const db = createServiceClient();
   const { data: current } = await db.from("missing_person_notices").select("workspace_id").eq("id", noticeId).eq("notebook_id", id).maybeSingle();
   if (!current) throw new ApiError(404, "not_found");
-  const update: Record<string, unknown> = { ...body };
+  const update: Record<string, unknown> = {};
   if (body.reviewStatus !== undefined) {
+    update.review_status = body.reviewStatus;
     update.reviewed_by = user.id;
     update.reviewed_at = new Date().toISOString();
   }
+  if (body.publicationStatus !== undefined) update.publication_status = body.publicationStatus;
+  if (body.reviewNote !== undefined) update.review_note = body.reviewNote;
   const { data, error } = await db.from("missing_person_notices").update(update)
     .eq("id", noticeId).eq("notebook_id", id)
     .select("id, review_status, publication_status, review_note, reviewed_at").single();
