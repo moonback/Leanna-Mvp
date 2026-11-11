@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { AlertTriangle, ArrowUp, AudioLines, BookmarkPlus, Eraser, Settings2, ThumbsDown, ThumbsUp, FileText, Globe, Inbox, Lock, NotebookPen, Pencil, Plus, Square, Sparkles, Trash2, Type, Upload, Search, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, FolderOpen, ClipboardList } from "lucide-react";
+import { AlertTriangle, ArrowUp, AudioLines, BookmarkPlus, Eraser, Settings2, ThumbsDown, ThumbsUp, FileText, Globe, Inbox, Lock, NotebookPen, Pencil, Plus, Square, Sparkles, Trash2, Type, Upload, Search, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, FolderOpen, ClipboardList, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { Alert, Badge, EmptyState, Progress, Skeleton } from "@/components/ui/feedback";
@@ -18,6 +18,7 @@ import { FastResearch } from "./fast-research";
 import { VoiceAssistant } from "./voice-assistant";
 import type { NumberedVoicePassage } from "./voice-turn";
 import { InvestigationPanel } from "./investigation-panel";
+import { InvestigationGraphPanel } from "./investigation-graph-panel";
 
 export type Role = "chat" | "viewer" | "editor" | "owner";
 type Source = { id: string; kind: string; title: string; status: string; error_code: string | null; word_count: number | null };
@@ -73,7 +74,7 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
   const [noteEditor, setNoteEditor] = React.useState<{ id?: string } | null>(null);
   const [renaming, setRenaming] = React.useState<Source | null>(null);
   const [mobileTab, setMobileTab] = React.useState("chat");
-  const [mainView, setMainView] = React.useState<"chat" | "investigation">("chat");
+  const [mainView, setMainView] = React.useState<"chat" | "investigation" | "graph">("chat");
   const [draft, setDraft] = React.useState<{ text: string } | null>(null); // question pré-remplie depuis le Studio
   const desktop = useMediaQuery("(min-width: 1024px)");
   const wideDesktop = useMediaQuery("(min-width: 1280px)");
@@ -250,7 +251,8 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
   const chatPanel = <Chat notebookId={notebookId} readyCount={role === "chat" ? (overview?.readySources ?? 0) : selectedCount} sourceTitle={(id) => titles.get(id)} canSaveNote={canEdit} onNoteSaved={() => void load()} onOpenCitation={(c) => setViewer({ sourceId: c.source_id, range: [c.char_start, c.char_end] })} onOpenPassage={(p) => setViewer({ sourceId: p.sourceId, range: [p.charStart, p.charEnd], timeStartMs: p.timeStartMs ?? undefined })} canViewSources={role !== "chat"} draft={draft} canConfigure={canEdit} overview={overview} />;
 
   const investigationPanel = <InvestigationPanel notebookId={notebookId} canEdit={canEdit} sources={sources ?? []} onOpenSource={(sourceId) => setViewer({ sourceId })} />;
-  const mainPanel = mainView === "investigation" ? investigationPanel : chatPanel;
+  const graphPanel = <InvestigationGraphPanel notebookId={notebookId} canEdit={canEdit} sources={sources ?? []} onOpenSource={(sourceId) => setViewer({ sourceId })} />;
+  const mainPanel = mainView === "investigation" ? investigationPanel : mainView === "graph" ? graphPanel : chatPanel;
 
   const studioPanel = (
     <Studio notebookId={notebookId} canEdit={canEdit} sourceIds={ready.filter((s) => !deselected.has(s.id)).map((s) => s.id)} sourceTitle={(id) => titles.get(id)}
@@ -271,7 +273,7 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
       )}
       {actionsSlot && createPortal(
         <div className="flex items-center gap-2">
-          {desktop && role !== "chat" && <Button size="sm" variant={mainView === "investigation" ? "soft" : "secondary"} onClick={() => setMainView((v) => v === "chat" ? "investigation" : "chat")}><ClipboardList aria-hidden />{mainView === "investigation" ? "Retour au chat" : "Enquête"}</Button>}
+          {desktop && role !== "chat" && <><Button size="sm" variant={mainView === "investigation" ? "soft" : "secondary"} onClick={() => setMainView((v) => v === "investigation" ? "chat" : "investigation")}><ClipboardList aria-hidden />Enquête</Button><Button size="sm" variant={mainView === "graph" ? "soft" : "secondary"} onClick={() => setMainView((v) => v === "graph" ? "chat" : "graph")}><Network aria-hidden />Graphe</Button></>}
           <NotebookActionsMenu notebookId={notebookId} allowCopies={allowCopies} canCopy={role === "owner" || (role !== "chat" && allowCopies)} canShare={role === "owner"} />
         </div>,
         actionsSlot,
@@ -412,10 +414,12 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
           <div className="min-h-0 flex-1 p-2">
             <TabsContent value="sources" className="h-full">{sourcesPanel}</TabsContent>
             <TabsContent value="chat" className="h-full">{chatPanel}</TabsContent>
+            <TabsContent value="investigation" className="h-full">{investigationPanel}</TabsContent>
+            <TabsContent value="graph" className="h-full">{graphPanel}</TabsContent>
             <TabsContent value="studio" className="h-full">{studioPanel}</TabsContent>
           </div>
-          <TabsList aria-label="Panneaux" className="grid h-14 shrink-0 grid-cols-4 border-t bg-surface-raised px-2">
-            <TabsTrigger value="sources">Sources</TabsTrigger><TabsTrigger value="chat">Chat</TabsTrigger><TabsTrigger value="investigation">Enquête</TabsTrigger><TabsTrigger value="studio">Studio</TabsTrigger>
+          <TabsList aria-label="Panneaux" className="grid h-14 shrink-0 grid-cols-5 border-t bg-surface-raised px-2">
+            <TabsTrigger value="sources">Sources</TabsTrigger><TabsTrigger value="chat">Chat</TabsTrigger><TabsTrigger value="investigation">Enquête</TabsTrigger><TabsTrigger value="graph">Graphe</TabsTrigger><TabsTrigger value="studio">Studio</TabsTrigger>
           </TabsList>
         </Tabs>
       )}
