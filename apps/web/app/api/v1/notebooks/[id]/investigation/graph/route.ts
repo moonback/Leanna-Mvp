@@ -9,9 +9,14 @@ const entityType = z.enum(["person","place","vehicle","object","organization"]);
 
 const createNodeSchema = z.object({
   entity_id: uuid,
-  canonical_label: z.string().trim().min(1).max(240),
+  cluster_id: uuid.optional(),
+  canonical_label: z.string().trim().min(1).max(240).optional(),
   match_rationale: z.string().trim().max(2000).optional(),
-}).strict();
+}).strict().superRefine((value, ctx) => {
+  if (!value.cluster_id && !value.canonical_label) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Un libellé canonique est requis pour créer un nœud.", path: ["canonical_label"] });
+  }
+});
 
 /** Lecture du graphe et de ses éléments de provenance, sous RLS du dossier. */
 export const GET = handle(async (_req: NextRequest, { params }: Params) => {
@@ -66,15 +71,27 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
   if (mentionError) throw mentionError;
   if (!mention) throw new ApiError(404, "entity_mention_not_found");
 
-  const { data: cluster, error: clusterError } = await db.from("investigation_entity_clusters").insert({
-    workspace_id: mention.workspace_id,
-    notebook_id: id,
-    entity_type: mention.entity_type,
-    canonical_label: body.canonical_label,
-    status: "candidate",
-    created_by: user.id,
-  }).select("*").single();
-  if (clusterError) throw clusterError;
+  let cluster: { id: string; workspace_id: string; notebook_id: string; entity_type: string; canonical_label: string; status: string };
+  if (body.cluster_id) {
+    const { data: existingCluster, error: existingClusterError } = await db.from("investigation_entity_clusters")
+      .select("*").eq("id", body.cluster_id).eq("notebook_id", id).maybeSingle();
+    if (existingClusterError) throw existingClusterError;
+    if (!existingCluster) throw new ApiError(404, "graph_node_not_found");
+    if (existingCluster.entity_type !== mention.entity_type) throw new ApiError(422, "entity_type_mismatch");
+    if (existingCluster.status !== "candidate" && existingCluster.status !== "confirmed") throw new ApiError(409, "graph_node_not_linkable");
+    cluster = existingCluster;
+  } else {
+    const { data: createdCluster, error: clusterError } = await db.from("investigation_entity_clusters").insert({
+      workspace_id: mention.workspace_id,
+      notebook_id: id,
+      entity_type: mention.entity_type,
+      canonical_label: body.canonical_label,
+      status: "candidate",
+      created_by: user.id,
+    }).select("*").single();
+    if (clusterError) throw clusterError;
+    cluster = createdCluster;
+  }
 
   const { data: link, error: linkError } = await db.from("investigation_entity_mentions").insert({
     workspace_id: mention.workspace_id,
@@ -86,7 +103,7 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
     created_by: user.id,
   }).select("*").single();
   if (linkError) {
-    await db.from("investigation_entity_clusters").delete().eq("id", cluster.id).eq("notebook_id", id);
+    if (!body.cluster_id) await db.from("investigation_entity_clusters").delete().eq("id", cluster.id).eq("notebook_id", id);
     if (linkError.code === "23505") throw new ApiError(409, "entity_already_linked");
     throw linkError;
   }
@@ -94,10 +111,10 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
   const { error: auditError } = await db.from("audit_log").insert({
     workspace_id: mention.workspace_id,
     actor_id: user.id,
-    action: "investigation.graph.entity_candidate.create",
+    action: body.cluster_id ? "investigation.graph.entity_mention.link" : "investigation.graph.entity_candidate.create",
     target_type: "investigation_entity_cluster",
     target_id: cluster.id,
-    meta: { notebook_id: id, entity_id: mention.id, match_status: "candidate" },
+    meta: { notebook_id: id, entity_id: mention.id, cluster_id: cluster.id, match_status: "candidate" },
   });
   if (auditError) throw auditError;
   return NextResponse.json({ cluster, mention: link }, { status: 201 });
