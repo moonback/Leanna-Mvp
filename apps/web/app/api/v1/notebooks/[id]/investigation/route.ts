@@ -27,14 +27,14 @@ const eventSchema = z.object({
   occurred_at_start: z.string().datetime({ offset: true }).nullable().optional(),
   occurred_at_end: z.string().datetime({ offset: true }).nullable().optional(),
   date_precision: z.enum(["exact","approximate","range","unknown"]),
-}).strict().refine(v => !v.occurred_at_start || !v.occurred_at_end || new Date(v.occurred_at_end) >= new Date(v.occurred_at_start), "Intervalle de dates invalide.");
+}).strict();
 const statementSchema = z.object({
   kind: z.literal("statement"), ...sourceFields,
   statement_type: z.enum(["documented_fact","testimony","unverified_information","hypothesis","contradiction"]),
   content: z.string().trim().min(1).max(5000),
   speaker_label: z.string().trim().max(240).nullable().optional(),
   recorded_at: z.string().datetime({ offset: true }).nullable().optional(),
-}).strict().refine(v => !v.speaker_label || v.context_excerpt.includes(v.speaker_label), "L’attribution doit apparaître dans l’extrait source.");
+}).strict();
 const leadSchema = z.object({
   kind: z.literal("lead"), source_id: uuid,
   title: z.string().trim().min(1).max(240),
@@ -45,7 +45,23 @@ const leadSchema = z.object({
   confidence: z.enum(["low","moderate","high"]).default("low"),
   page_number: z.number().int().positive().nullable().optional(),
 }).strict();
-const createSchema = z.discriminatedUnion("kind", [entitySchema,eventSchema,statementSchema,leadSchema]);
+const createSchema = z.discriminatedUnion("kind", [entitySchema,eventSchema,statementSchema,leadSchema]).superRefine((value, ctx) => {
+  if (value.kind === "entity") {
+    if (value.char_start != null && value.char_end != null && value.char_end <= value.char_start) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Offsets invalides.", path: ["char_end"] });
+    }
+    if (!value.context_excerpt.includes(value.label)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Le libellé doit apparaître dans l’extrait source.", path: ["label"] });
+    }
+  }
+  if (value.kind === "event" && value.occurred_at_start && value.occurred_at_end
+      && new Date(value.occurred_at_end) < new Date(value.occurred_at_start)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Intervalle de dates invalide.", path: ["occurred_at_end"] });
+  }
+  if (value.kind === "statement" && value.speaker_label && !value.context_excerpt.includes(value.speaker_label)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "L’attribution doit apparaître dans l’extrait source.", path: ["speaker_label"] });
+  }
+});
 
 const TABLES = {
   entity: "investigation_entities",
