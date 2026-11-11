@@ -1,6 +1,7 @@
 -- Socle métier des dossiers d'enquête : toutes les informations restent rattachées
 -- à une source du même dossier. Les écritures passent par les Route Handlers après
 -- requireRole ; les clients ne disposent que de SELECT sous RLS.
+alter table public.notebooks add constraint notebooks_workspace_id_id_unique unique (workspace_id, id);
 alter table public.sources add constraint sources_id_notebook_unique unique (id, notebook_id);
 
 create table public.investigation_entities (
