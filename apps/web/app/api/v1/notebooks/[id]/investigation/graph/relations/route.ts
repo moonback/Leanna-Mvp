@@ -12,6 +12,7 @@ const relationSchema = z.object({
   relation_type: z.enum(["knows","reported_about","seen_at","located_at","travelled_in","owns","uses","works_for","related_to","present_with","contacted","mentioned_with","other"]),
   description: z.string().trim().max(2000).optional(),
   source_id: uuid,
+  event_id: uuid.nullable().optional(),
   quote: z.string().trim().min(1).max(4000),
   page_number: z.number().int().positive().nullable().optional(),
   char_start: z.number().int().nonnegative().nullable().optional(),
@@ -46,6 +47,16 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
   if (!subject || !object) throw new ApiError(404, "graph_node_not_found");
   if (subject.status !== "confirmed" || object.status !== "confirmed") throw new ApiError(409, "graph_nodes_not_confirmed");
   if (!source) throw new ApiError(404, "source_not_in_dossier");
+  let event: { id: string; source_id: string; context_excerpt: string } | null = null;
+  if (body.event_id) {
+    const { data: eventRecord, error: eventError } = await db.from("investigation_events")
+      .select("id, source_id, context_excerpt").eq("id", body.event_id).eq("notebook_id", id).maybeSingle();
+    if (eventError) throw eventError;
+    if (!eventRecord) throw new ApiError(404, "event_not_in_dossier");
+    if (eventRecord.source_id !== source.id) throw new ApiError(422, "evidence_source_mismatch");
+    if (!eventRecord.context_excerpt.includes(body.quote)) throw new ApiError(422, "evidence_context_mismatch");
+    event = eventRecord;
+  }
   if (subject.workspace_id !== object.workspace_id || subject.workspace_id !== source.workspace_id) throw new ApiError(422, "workspace_mismatch");
   if (source.status !== "ready" || !source.extracted_text) throw new ApiError(409, "source_not_ready");
   const first = source.extracted_text.indexOf(body.quote);
@@ -78,6 +89,7 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
     evidence_role: body.evidence_role,
     quote: body.quote,
     quote_hash: quoteHash,
+    event_id: event?.id ?? null,
     page_number: body.page_number ?? null,
     char_start: charStart,
     char_end: charEnd,
