@@ -147,7 +147,7 @@ Documents importants :
 
 ## État de la réorientation produit
 
-Cette branche ajoute les fondations métier du dossier d’enquête : entités mentionnées, événements, déclarations et pistes persistées, chacune rattachée à une source du même dossier. Le panneau permet la saisie, la revue humaine et le lancement explicite d’une extraction IA par lots. Les extraits IA ne sont enregistrés que s’ils correspondent exactement au texte source ; les traitements sont idempotents et journalisés. Les relations entre entités, le recoupement multi-sources automatique, la résolution des homonymes et la génération assistée de pistes restent des étapes ultérieures.
+Cette branche ajoute les fondations métier du dossier d’enquête : entités mentionnées, événements, déclarations et pistes persistées, chacune rattachée à ses sources et extraits. Le panneau permet la saisie, la revue humaine, l’extraction IA par lots et le recoupement multi-sources qui propose des pistes sans les valider. Les extraits IA ne sont enregistrés que s’ils correspondent exactement au texte source ; les traitements sont idempotents et journalisés. La résolution des homonymes, les relations permanentes entre entités et les chronologies avancées restent à développer.
 
 ## Contribution
 
