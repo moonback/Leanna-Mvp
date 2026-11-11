@@ -15,7 +15,15 @@ const schema = z.object({
   title: z.string().trim().min(1).max(240),
   description: z.string().trim().min(1).max(3000),
   evidence: z.array(evidenceSchema).min(2).max(20),
-}).strict();
+}).strict().superRefine((value, ctx) => {
+  const ids = value.evidence.map((item) => item.statement_id);
+  if (new Set(ids).size !== ids.length) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Chaque déclaration doit être ajoutée une seule fois.", path: ["evidence"] });
+  }
+  if (value.evidence.filter((item) => item.position === "conflicts").length < 2) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Deux déclarations en tension sont nécessaires.", path: ["evidence"] });
+  }
+});
 
 /** Crée une contradiction documentaire seulement si deux sources distinctes sont citées exactement. */
 export const POST = handle(async (req: NextRequest, { params }: Params) => {
