@@ -5,8 +5,6 @@ import { z } from "zod";
 
 type Params = { params: Promise<{ id: string }> };
 const uuid = z.string().uuid();
-const entityType = z.enum(["person","place","vehicle","object","organization"]);
-
 const createNodeSchema = z.object({
   entity_id: uuid,
   cluster_id: uuid.optional(),
