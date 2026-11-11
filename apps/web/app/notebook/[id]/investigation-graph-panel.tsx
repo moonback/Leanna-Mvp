@@ -12,7 +12,7 @@ type Cluster = { id: string; entity_type: string; canonical_label: string; statu
 type EntityRecord = { id: string; source_id: string; entity_type: string; label: string; context_excerpt: string; page_number: number | null; verification_status: string; origin: string };
 type Mention = { id: string; entity_id: string; cluster_id: string; match_status: string; match_rationale: string | null };
 type Relation = { id: string; subject_cluster_id: string; object_cluster_id: string; relation_type: string; description: string | null; status: string };
-type RelationEvidence = { id: string; relation_id: string; source_id: string; evidence_role: string; quote: string; page_number: number | null };
+type RelationEvidence = { id: string; relation_id: string; source_id: string; event_id: string | null; evidence_role: string; quote: string; page_number: number | null };
 type EventRecord = { id: string; source_id: string; title: string; description: string; original_date_text: string; occurred_at_start: string | null; occurred_at_end: string | null; date_precision: string; context_excerpt: string; page_number: number | null; verification_status: string };
 type SourceLineage = { id: string; parent_source_id: string; child_source_id: string; lineage_type: string; note: string | null };
 type StatementRecord = { id: string; source_id: string; statement_type: string; content: string; speaker_label: string | null; context_excerpt: string; page_number: number | null; verification_status: string };
@@ -260,7 +260,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
                       {relation.description && <p className="text-xs text-text-muted">{relation.description}</p>}
                       {data.relationEvidence.filter((item) => item.relation_id === relation.id).map((item) => (
                         <div key={item.id} className="rounded-md bg-surface-secondary p-2">
-                          <div className="text-[11px] text-text-muted">{item.evidence_role === "contrary" ? "Élément contraire" : item.evidence_role === "context" ? "Contexte" : "Élément favorable"} · {sourceTitle(item.source_id)}</div>
+                          <div className="text-[11px] text-text-muted">{item.evidence_role === "contrary" ? "Élément contraire" : item.evidence_role === "context" ? "Contexte" : "Élément favorable"} · {sourceTitle(item.source_id)}{item.event_id ? " · Événement : " + (data.events.find((event) => event.id === item.event_id)?.title ?? "lié") : ""}</div>
                           <p className="mt-1 text-xs">« {item.quote} »</p>
                           <button type="button" onClick={() => onOpenSource(item.source_id)} className="mt-1 text-xs text-accent hover:underline">Ouvrir la source{item.page_number ? ` · p. ${item.page_number}` : ""}</button>
                         </div>
