@@ -10,7 +10,7 @@ Leanna Notebook est une application SaaS multi-utilisateur fondée sur Next.js, 
 |---|---|---|
 | Dossiers d’enquête | Organisation documentaire, membres, liens de partage, visites et copie | Le modèle de données conserve le nom technique `notebooks` ; le parcours métier est en cours de spécialisation |
 | Sources | Import, traitement, sélection, recherche et citations | OCR des PDF scannés non confirmé |
-| Analyse d’enquête | Chat streaming, recherche hybride, citations résolues ; prompts orientés disparitions, chronologie, déclarations, contradictions et pistes de vérification | Les pistes restent des propositions à valider humainement ; le registre structuré et l’extraction IA des entités/événements/déclarations sont disponibles sur demande |
+| Analyse d’enquête | Chat streaming, citations, extraction IA contrôlée des entités/événements/déclarations et recoupement multi-sources proposant des pistes sourcées | Les pistes restent des propositions à valider humainement ; aucune fusion automatique d’identités ni conclusion d’enquête |
 | Studio | Rapports, fiches, quiz, cartes mentales, infographies, chronologies, comparatifs, glossaires, FAQ, diagrammes, contenus éditoriaux et plans d'étude | 13 types acceptés par l'API ; résultats visuels non validés exhaustivement |
 | Audio Overview | Script dialogué à deux voix, TTS segmenté, mixage ffmpeg et MP3 privé | Nécessite les identifiants TTS et ffmpeg sur le worker |
 | Mode vocal | Gemini Live, recherche RAG, Leanna et co-animatrice Roxane | Roxane est désactivée par défaut ; deux premiers échanges silencieux |
