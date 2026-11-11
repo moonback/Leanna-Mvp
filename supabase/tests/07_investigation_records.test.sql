@@ -50,6 +50,13 @@ select ctx.ws, '22222222-2222-2222-2222-222222222222', src.id, 'Vérifier une in
        'Comparer avec une autre pièce autorisée.', '00000000-0000-0000-0000-00000000000a'
 from ctx, src;
 
+insert into public.investigation_lead_evidence
+  (workspace_id, notebook_id, lead_id, source_id, evidence_role, quote, quote_hash)
+select ctx.ws, '22222222-2222-2222-2222-222222222222', l.id, src.id, 'support',
+       'Extrait motivant la question.', encode(sha256(convert_to('Extrait motivant la question.', 'UTF8')), 'hex')
+from ctx, src, public.investigation_leads l
+where l.notebook_id = '22222222-2222-2222-2222-222222222222';
+
 create or replace function pg_temp.login(p uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', p, 'role', 'authenticated')::text, true);
   set local role authenticated;
