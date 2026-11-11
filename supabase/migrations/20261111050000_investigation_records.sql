@@ -180,9 +180,9 @@ create table public.investigation_lead_evidence (
   foreign key (lead_id, notebook_id) references public.investigation_leads(id, notebook_id) on delete cascade,
   foreign key (source_id, notebook_id) references public.sources(id, notebook_id) on delete cascade,
   foreign key (workspace_id, notebook_id) references public.notebooks(workspace_id, id) on delete cascade,
-  unique (lead_id, source_id, evidence_role, quote)
 );
-create unique index investigation_lead_evidence_unique on public.investigation_lead_evidence(lead_id, source_id, evidence_role, md5(quote));\ncreate index investigation_lead_evidence_lead_idx on public.investigation_lead_evidence(lead_id);
+create unique index investigation_lead_evidence_unique on public.investigation_lead_evidence(lead_id, source_id, evidence_role, md5(quote));
+create index investigation_lead_evidence_lead_idx on public.investigation_lead_evidence(lead_id);
 create index investigation_lead_evidence_source_idx on public.investigation_lead_evidence(source_id);
 alter table public.investigation_lead_evidence enable row level security;
 create policy investigation_lead_evidence_read on public.investigation_lead_evidence for select to authenticated
