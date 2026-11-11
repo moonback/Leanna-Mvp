@@ -31,10 +31,11 @@ export const POST = handle(async (_req: NextRequest, { params }: Params) => {
     ...(statements.data ?? []).map((x) => x.source_id),
   ]).size;
   if (sourceCount < 2) throw new ApiError(409, "insufficient_sources");
+  const fingerprint = createHash("sha256").update(records.map((record) => `${record.id}:${record.updated_at}`).sort().join("|")).digest("hex");
   const { data: jobId, error: queueError } = await db.rpc("queue_investigation_crosscheck_job", {
     p_notebook: id,
     p_user: user.id,
-    p_idempotency_key: `investigation-crosscheck:${id}:${randomUUID()}`,
+    p_idempotency_key: `investigation-crosscheck:${id}:${fingerprint}`,
   });
   if (queueError) {
     if (queueError.message.includes("quota_")) throw new ApiError(402, queueError.message);
