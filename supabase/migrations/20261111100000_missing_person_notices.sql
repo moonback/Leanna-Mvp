@@ -12,8 +12,8 @@ create table public.missing_person_notices (
   published_date_text text check (published_date_text is null or char_length(published_date_text) <= 160),
   disappearance_location text check (disappearance_location is null or char_length(disappearance_location) <= 500),
   published_summary text check (published_summary is null or char_length(published_summary) <= 5000),
-  publication_status text not null default 'active'
-    check (publication_status in ('active','changed','removed','unavailable')),
+  publication_status text not null default 'unverified'
+    check (publication_status in ('unverified','active','changed','removed','unavailable')),
   review_status text not null default 'pending_review'
     check (review_status in ('pending_review','approved','rejected')),
   content_hash text not null check (char_length(content_hash) = 64),
