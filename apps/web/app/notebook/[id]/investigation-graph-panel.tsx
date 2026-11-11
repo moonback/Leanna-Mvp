@@ -167,7 +167,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
         method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ status }),
       });
       if (!response.ok) throw new Error("review_failed");
-      toast({ title: status === "confirmed" ? "Élément confirmé par l'éditeur" : "Élément rejeté", tone: "success" });
+      toast({ title: status === "resolved" ? "Contradiction marquée comme résolue" : status === "confirmed" ? "Élément confirmé par l'éditeur" : "Élément rejeté", tone: "success" });
       await load();
     } catch { toast({ title: "Revue impossible", tone: "error" }); }
   };
@@ -359,7 +359,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
             {view === "contradictions" && (
               <section className="grid gap-2">
                 <h3 className="text-sm font-semibold">Contradictions documentaires</h3>
-                {canEdit && data.statements.length >= 2 && <form onSubmit={createContradiction} className="grid gap-2 rounded-xl border border-border p-3">
+                {canEdit && new Set(data.statements.map((statement) => statement.source_id)).size >= 2 && <form onSubmit={createContradiction} className="grid gap-2 rounded-xl border border-border p-3">
                   <h4 className="text-sm font-medium">Consigner deux déclarations incompatibles</h4>
                   <input required maxLength={240} value={contradictionTitle} onChange={(event) => setContradictionTitle(event.target.value)} placeholder="Titre de la contradiction" className="h-10 rounded-md border border-border bg-surface px-3 text-sm" />
                   <textarea required maxLength={3000} value={contradictionDescription} onChange={(event) => setContradictionDescription(event.target.value)} placeholder="Décrire précisément ce qui paraît incompatible, sans trancher…" className="min-h-16 rounded-md border border-border bg-surface px-3 py-2 text-sm" />
