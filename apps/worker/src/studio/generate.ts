@@ -51,13 +51,13 @@ const TEMPLATES: Record<string, string> = {
   practical_sheet: "Fiche pratique : objectif, prérequis, informations nécessaires, étapes numérotées, conseils, erreurs à éviter et checklist finale.",
   detailed_guide: "Guide détaillé : introduction, progression pédagogique par étapes, explications, exemples tirés des sources, bonnes pratiques et synthèse finale.",
   infographic: "Infographie : crée une synthèse visuelle en Markdown avec titre, 3 à 6 chiffres clés uniquement s'ils figurent dans les sources, étapes, comparaisons et blocs À retenir. N'invente aucune donnée.",
-  timeline: "Chronologie : liste les événements explicitement datés dans les sources, dans l'ordre chronologique. Pour chaque événement, indique la date, le fait et la citation [n]. Si la date est imprécise, indique-le sans la deviner.",
+  timeline: "Chronologie d’enquête : sépare date de l’événement, date du témoignage et date du document. Pour chaque événement, indique la formulation originale, le degré de précision temporelle et la citation [n]. Conserve les contradictions et ne déduis jamais une date manquante.",
   comparison: "Tableau de recoupement : compare les versions et déclarations en indiquant convergences, divergences, contradictions, sources indépendantes ou répétitions d’une même information. Cite chaque élément et indique « non précisé » si une donnée manque.",
   glossary: "Index du dossier : recense les personnes, lieux, véhicules, objets et organisations explicitement mentionnés. Conserve le libellé, le contexte et les références [n]. Signale les homonymes possibles sans les fusionner.",
   faq: "FAQ : formule 8 à 12 questions utiles et réponds de façon concise. Chaque réponse factuelle doit citer les passages [n]. Signale quand les sources ne permettent pas de répondre.",
   diagram: "Diagramme : produis un diagramme Mermaid valide (flowchart ou sequenceDiagram selon les sources), dans un bloc de code Mermaid, puis une courte légende. N'ajoute aucune étape non documentée.",
   editorial: "Contenu éditorial : réécris fidèlement les sources sous forme de newsletter, article de blog ou fil de réseaux sociaux selon les consignes. Conserve les citations [n] et n'ajoute aucun fait externe.",
-  study_plan: "Plan d'étude : crée un planning de révision sur le nombre de jours indiqué dans les consignes, répartis par jour avec objectifs, notions, exercices et rappels. Chaque notion doit être sourcée [n].",
+  study_plan: "Plan de vérification : organise les questions documentaires non résolues par priorité, avec éléments sources, lacunes, contradictions et contrôle humain requis. N’invente aucune démarche intrusive et source chaque question [n].",
 };
 
 /** Construit le prompt d'un type d'artefact. Exporté pour les tests. */
