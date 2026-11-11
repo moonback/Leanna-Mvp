@@ -29,7 +29,10 @@ select public.add_source(
   'txt', 'Copie du rapport'
 ) as id;
 grant select on graph_src_a, graph_src_b to authenticated, service_role;
-update public.sources set status = 'ready'
+update public.sources set status = 'ready', extracted_text = case
+  when id = (select id from graph_src_a) then 'Le témoin indique : la personne était au lieu A.'
+  when id = (select id from graph_src_b) then 'Un second témoin indique : la personne était au lieu B.'
+  else extracted_text end
 where id in ((select id from graph_src_a), (select id from graph_src_b));
 
 insert into public.investigation_entities
