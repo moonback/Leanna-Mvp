@@ -51,7 +51,12 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
     } catch { setError(true); }
     finally { setLoading(false); }
   }, [notebookId]);
-  React.useEffect(() => { void load(); }, [load]);\n  React.useEffect(() => {\n    if (!data.extractionJobs.some((job) => job.status === "queued" || job.status === "running")) return;\n    const timer = window.setInterval(() => void load(), 3000);\n    return () => window.clearInterval(timer);\n  }, [data.extractionJobs, load]);
+  React.useEffect(() => { void load(); }, [load]);
+  React.useEffect(() => {
+    if (!data.extractionJobs.some((job) => job.status === "queued" || job.status === "running")) return;
+    const timer = window.setInterval(() => void load(), 3000);
+    return () => window.clearInterval(timer);
+  }, [data.extractionJobs, load]);
 
   const set = (key: string, value: string) => setFields((old) => ({ ...old, [key]: value }));
   const startExtraction = async () => {
