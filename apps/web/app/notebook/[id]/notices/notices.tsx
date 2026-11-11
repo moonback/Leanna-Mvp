@@ -73,7 +73,7 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
   async function createDossier(notice: Notice) {
     setCreatingDossierFor(notice.id);
     try {
-      const created = await fetch("/api/v1/notebooks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: "Enquête — " + notice.person_name }) });
+      const created = await fetch("/api/v1/notebooks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: ("Enquête — " + notice.person_name).slice(0, 200) }) });
       const createdJson = await created.json();
       if (!created.ok) throw new Error(created.status === 409 && createdJson.error === "max_notebooks" ? "La limite de dossiers de votre offre est atteinte." : "Création du dossier impossible.");
       const newNotebookId = createdJson.notebook.id as string;
