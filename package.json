@@ -1,0 +1,21 @@
+{
+  "name": "notebook",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --dir apps/web dev",
+    "desktop:dev": "pnpm --dir apps/desktop dev",
+    "desktop:build": "pnpm --dir apps/desktop build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "db:start": "supabase start",
+    "db:reset": "supabase db reset",
+    "db:test": "supabase test db",
+    "desktop:test": "pnpm --dir apps/desktop test",
+    "desktop:doctor": "node apps/desktop/scripts/doctor.cjs",
+    "desktop:dist:win": "pnpm --dir apps/desktop dist:win"
+  },
+  "devDependencies": {
+    "supabase": "^2"
+  }
+}
