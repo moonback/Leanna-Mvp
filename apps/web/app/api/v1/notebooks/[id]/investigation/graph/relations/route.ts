@@ -36,14 +36,15 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
   const db = createServiceClient();
 
   const [{ data: subject, error: subjectError }, { data: object, error: objectError }, { data: source, error: sourceError }] = await Promise.all([
-    db.from("investigation_entity_clusters").select("id, workspace_id, notebook_id").eq("id", body.subject_cluster_id).eq("notebook_id", id).maybeSingle(),
-    db.from("investigation_entity_clusters").select("id, workspace_id, notebook_id").eq("id", body.object_cluster_id).eq("notebook_id", id).maybeSingle(),
+    db.from("investigation_entity_clusters").select("id, workspace_id, notebook_id, status").eq("id", body.subject_cluster_id).eq("notebook_id", id).maybeSingle(),
+    db.from("investigation_entity_clusters").select("id, workspace_id, notebook_id, status").eq("id", body.object_cluster_id).eq("notebook_id", id).maybeSingle(),
     db.from("sources").select("id, workspace_id, notebook_id, status, extracted_text").eq("id", body.source_id).eq("notebook_id", id).maybeSingle(),
   ]);
   if (subjectError) throw subjectError;
   if (objectError) throw objectError;
   if (sourceError) throw sourceError;
   if (!subject || !object) throw new ApiError(404, "graph_node_not_found");
+  if (subject.status !== "confirmed" || object.status !== "confirmed") throw new ApiError(409, "graph_nodes_not_confirmed");
   if (!source) throw new ApiError(404, "source_not_in_dossier");
   if (subject.workspace_id !== object.workspace_id || subject.workspace_id !== source.workspace_id) throw new ApiError(422, "workspace_mismatch");
   if (source.status !== "ready" || !source.extracted_text) throw new ApiError(409, "source_not_ready");
