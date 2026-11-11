@@ -62,11 +62,9 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
   React.useEffect(() => { void load(); }, [load]);
 
   const sourceTitle = (id: string) => sources.find((source) => source.id === id)?.title ?? "Source du dossier";
-  const clusterLabel = (id: string) => data.clusters.find((cluster) => cluster.id === id)?.canonical_label ?? "Nœud inconnu";
   const linkedEntityIds = new Set(data.mentions.map((mention) => mention.entity_id));
   const unlinkedEntities = data.entityRecords.filter((entity) => !linkedEntityIds.has(entity.id));
   const confirmedClusters = data.clusters.filter((cluster) => cluster.status === "confirmed");
-  const evidenceFor = (relationId: string) => data.relationEvidence.filter((item) => item.relation_id === relationId);
 
   const createNode = async (entity: EntityRecord, clusterId?: string) => {
     setCreatingNode(entity.id);
@@ -103,7 +101,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
     } finally { setCreatingRelation(false); }
   };
 
-  const review = async (kind: "cluster" | "relation" | "contradiction", recordId: string, status: "confirmed" | "rejected") => {
+  const review = async (kind: "cluster" | "mention" | "relation" | "contradiction", recordId: string, status: "confirmed" | "rejected" | "resolved") => {
     try {
       const response = await fetch(`/api/v1/notebooks/${notebookId}/investigation/graph/${kind}/${recordId}`, {
         method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ status }),
@@ -189,6 +187,44 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
                     </div>
                   ))}
                 </div>
+                {data.relations.length > 0 && <div className="grid gap-2">
+                  <h3 className="text-sm font-semibold">Relations et justificatifs</h3>
+                  {data.relations.map((relation) => (
+                    <div key={relation.id} className="grid gap-2 rounded-lg border border-border p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-sm font-medium">{data.clusters.find((node) => node.id === relation.subject_cluster_id)?.canonical_label ?? "Nœud"} <span className="text-text-muted">{relationLabels[relation.relation_type] ?? relation.relation_type}</span> {data.clusters.find((node) => node.id === relation.object_cluster_id)?.canonical_label ?? "Nœud"}</div>
+                        <Badge>{relation.status === "confirmed" ? "Confirmée" : relation.status === "rejected" ? "Rejetée" : "Proposée"}</Badge>
+                      </div>
+                      {relation.description && <p className="text-xs text-text-muted">{relation.description}</p>}
+                      {data.relationEvidence.filter((item) => item.relation_id === relation.id).map((item) => (
+                        <div key={item.id} className="rounded-md bg-surface-secondary p-2">
+                          <div className="text-[11px] text-text-muted">{item.evidence_role === "contrary" ? "Élément contraire" : item.evidence_role === "context" ? "Contexte" : "Élément favorable"} · {sourceTitle(item.source_id)}</div>
+                          <p className="mt-1 text-xs">« {item.quote} »</p>
+                          <button type="button" onClick={() => onOpenSource(item.source_id)} className="mt-1 text-xs text-accent hover:underline">Ouvrir la source{item.page_number ? ` · p. ${item.page_number}` : ""}</button>
+                        </div>
+                      ))}
+                      {canEdit && relation.status === "proposed" && <div className="flex gap-2">
+                        <Button size="sm" variant="secondary" onClick={() => void review("relation",relation.id,"confirmed")}><Check className="size-3.5"/>Confirmer</Button>
+                        <Button size="sm" variant="ghost" onClick={() => void review("relation",relation.id,"rejected")}><X className="size-3.5"/>Rejeter</Button>
+                      </div>}
+                    </div>
+                  ))}
+                </div>}
+                {data.mentions.length > 0 && <div className="grid gap-2">
+                  <h3 className="text-sm font-semibold">Rapprochements des mentions</h3>
+                  {data.mentions.map((mention) => {
+                    const entity = data.entityRecords.find((item) => item.id === mention.entity_id);
+                    const cluster = data.clusters.find((item) => item.id === mention.cluster_id);
+                    if (!entity || !cluster) return null;
+                    return <div key={mention.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-2">
+                      <div className="min-w-0 text-xs"><span className="font-medium">{entity.label}</span><span className="text-text-muted"> → {cluster.canonical_label} · {mention.match_status === "confirmed" ? "Rapprochement confirmé" : mention.match_status === "rejected" ? "Rapprochement rejeté" : "À examiner"}</span></div>
+                      {canEdit && mention.match_status === "candidate" && <div className="flex gap-1">
+                        <Button size="sm" variant="secondary" onClick={() => void review("mention",mention.id,"confirmed")}>Confirmer le rapprochement</Button>
+                        <Button size="sm" variant="ghost" onClick={() => void review("mention",mention.id,"rejected")}>Rejeter</Button>
+                      </div>}
+                    </div>;
+                  })}
+                </div>}
                 {canEdit && unlinkedEntities.length > 0 && (
                   <div className="grid gap-2">
                     <h3 className="text-sm font-semibold">Mentions à transformer en nœuds candidats</h3>
