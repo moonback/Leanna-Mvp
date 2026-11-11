@@ -75,6 +75,37 @@ create index investigation_source_lineage_parent_idx
 create index investigation_source_lineage_child_idx
   on public.investigation_source_lineage(notebook_id, child_source_id);
 
+create function private.prevent_investigation_source_lineage_cycle()
+returns trigger
+language plpgsql
+set search_path = ''
+as $
+begin
+  if exists (
+    with recursive reachable(source_id) as (
+      select l.child_source_id
+      from public.investigation_source_lineage l
+      where l.notebook_id = new.notebook_id
+        and l.parent_source_id = new.child_source_id
+      union
+      select l.child_source_id
+      from public.investigation_source_lineage l
+      join reachable r on r.source_id = l.parent_source_id
+      where l.notebook_id = new.notebook_id
+    )
+    select 1 from reachable where source_id = new.parent_source_id
+  ) then
+    raise exception 'source_lineage_cycle' using errcode = '23514';
+  end if;
+  return new;
+end;
+$;
+revoke all on function private.prevent_investigation_source_lineage_cycle() from public, anon, authenticated;
+create trigger investigation_source_lineage_no_cycle
+  before insert or update of parent_source_id, child_source_id, notebook_id
+  on public.investigation_source_lineage
+  for each row execute function private.prevent_investigation_source_lineage_cycle();
+
 create table public.investigation_relations (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null,
