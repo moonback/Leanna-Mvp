@@ -201,7 +201,7 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
           {[0, 1, 2].map((i) => <div key={i} className="flex gap-3"><Skeleton className="size-7" /><Skeleton className="h-4 flex-1" /></div>)}
         </div>
       ) : role === "chat" ? (
-        <p className="p-4 text-sm text-text-muted">Les sources de ce notebook ne sont pas consultables avec votre lien. Vous pouvez poser des questions.</p>
+        <p className="p-4 text-sm text-text-muted">Les sources de ce dossier ne sont pas consultables avec votre lien. Vous pouvez poser des questions.</p>
       ) : sources.length === 0 ? (
         <EmptyState icon={<Inbox />} title="Aucune source" action={canEdit && <Button onClick={() => setAdding(true)}><Plus aria-hidden /> Ajouter des sources</Button>}>
           Importez un PDF, une page web ou un texte : les réponses citeront ces documents.
@@ -258,10 +258,10 @@ export function Workspace({ notebookId, initialTitle, role, allowCopies }: { not
       {confirmDialog}
       {titleSlot && createPortal(
         canEdit ? (
-          <input aria-label="Titre du notebook" defaultValue={title} placeholder="Notebook sans titre" maxLength={200}
+          <input aria-label="Titre du dossier" defaultValue={title} placeholder="Dossier sans titre" maxLength={200}
             onBlur={(e) => void rename(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
             className="min-w-0 max-w-md flex-1 truncate rounded-md bg-transparent px-2 py-1 text-base font-semibold hover:bg-surface focus-visible:bg-surface" />
-        ) : <h1 className="truncate text-base font-semibold">{title || "Notebook sans titre"}</h1>,
+        ) : <h1 className="truncate text-base font-semibold">{title || "Dossier sans titre"}</h1>,
         titleSlot,
       )}
       {actionsSlot && createPortal(
