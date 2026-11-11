@@ -117,6 +117,9 @@ alter table public.investigation_events
   add column char_end integer check (char_end is null or char_end > char_start),
   add column origin text not null default 'manual' check (origin in ('manual','ai_extracted')),
   add column extraction_key text;
+alter table public.investigation_entities
+  add constraint investigation_entities_offsets_check check ((char_start is null and char_end is null) or (char_start is not null and char_end is not null and char_end > char_start));
+
 alter table public.investigation_statements
   add column char_start integer check (char_start is null or char_start >= 0),
   add column char_end integer check (char_end is null or char_end > char_start),
@@ -126,6 +129,8 @@ alter table public.investigation_statements
 create unique index investigation_entities_extraction_uq on public.investigation_entities(extraction_key);
 create unique index investigation_events_extraction_uq on public.investigation_events(extraction_key);
 create unique index investigation_statements_extraction_uq on public.investigation_statements(extraction_key);
+alter table public.investigation_events add constraint investigation_events_offsets_check check ((char_start is null and char_end is null) or (char_start is not null and char_end is not null and char_end > char_start));
+alter table public.investigation_statements add constraint investigation_statements_offsets_check check ((char_start is null and char_end is null) or (char_start is not null and char_end is not null and char_end > char_start));
 
 create trigger touch_updated_at before update on public.investigation_entities
   for each row execute function private.touch_updated_at();
@@ -181,6 +186,7 @@ create table public.investigation_lead_evidence (
   foreign key (lead_id, notebook_id) references public.investigation_leads(id, notebook_id) on delete cascade,
   foreign key (source_id, notebook_id) references public.sources(id, notebook_id) on delete cascade,
   foreign key (workspace_id, notebook_id) references public.notebooks(workspace_id, id) on delete cascade,
+  check ((char_start is null and char_end is null) or (char_start is not null and char_end is not null and char_end > char_start)),
   unique (lead_id, source_id, evidence_role, quote_hash)
 );
 create index investigation_lead_evidence_lead_idx on public.investigation_lead_evidence(lead_id);
