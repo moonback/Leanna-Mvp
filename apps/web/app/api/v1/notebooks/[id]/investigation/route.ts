@@ -58,18 +58,20 @@ export const GET = handle(async (_req: NextRequest, { params }: Params) => {
   const { id } = await params;
   await requireRole(id, "viewer");
   const db = await createUserClient();
-  const [entities, events, statements, leads] = await Promise.all([
+  const [entities, events, statements, leads, extractionJobs] = await Promise.all([
     db.from("investigation_entities").select("*").eq("notebook_id", id).order("created_at", { ascending: false }),
     db.from("investigation_events").select("*").eq("notebook_id", id).order("occurred_at_start", { ascending: true, nullsFirst: false }),
     db.from("investigation_statements").select("*").eq("notebook_id", id).order("created_at", { ascending: false }),
     db.from("investigation_leads").select("*").eq("notebook_id", id).order("created_at", { ascending: false }),
+    db.from("jobs").select("id, target_id, status, progress, stage, error_code, created_at").eq("notebook_id", id).eq("kind", "investigation_extract").order("created_at", { ascending: false }).limit(30),
   ]);
-  for (const result of [entities,events,statements,leads]) if (result.error) throw result.error;
+  for (const result of [entities,events,statements,leads,extractionJobs]) if (result.error) throw result.error;
   return NextResponse.json({
     entities: entities.data ?? [],
     events: events.data ?? [],
     statements: statements.data ?? [],
     leads: leads.data ?? [],
+    extractionJobs: extractionJobs.data ?? [],
   });
 });
 
