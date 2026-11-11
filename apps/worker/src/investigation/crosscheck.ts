@@ -130,7 +130,6 @@ RECORDS_JSON: " + JSON.stringify(input),
         leadId = existing.id;
       }
       if (!leadId) throw new Error("lead_upsert_missing_id");
-      }
       const evidenceRows = evidence.map(({ item, record, local }) => ({
         workspace_id: job.workspace_id, notebook_id: job.notebook_id, lead_id: leadId,
         source_id: record.source_id, evidence_role: item.role, quote: item.quote,
