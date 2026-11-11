@@ -209,7 +209,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
               <section className="grid gap-3">
                 <div className="overflow-hidden rounded-xl border border-border bg-surface-secondary">
                   {data.clusters.length === 0 ? (
-                    <EmptyState title="Le graphe est encore vide" description="Créez des nœuds candidats à partir des mentions extraites. Aucun homonyme ne sera fusionné automatiquement." />
+                    <EmptyState icon={<Network />} title="Le graphe est encore vide">Créez des nœuds candidats à partir des mentions extraites. Aucun homonyme ne sera fusionné automatiquement.</EmptyState>
                   ) : (
                     <svg viewBox="0 0 900 490" role="img" aria-label="Graphe des entités et relations du dossier" className="h-auto max-h-[520px] w-full">
                       <defs><marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="currentColor" /></marker></defs>
@@ -339,7 +339,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
             {view === "timeline" && (
               <section className="grid gap-2">
                 <h3 className="text-sm font-semibold">Chronologie multi-sources</h3>
-                {data.events.length === 0 ? <EmptyState title="Aucun événement extrait" description="Les événements documentaires apparaîtront ici avec leur date originale et leur source." /> : [...data.events].sort((a,b) => (a.occurred_at_start ?? "9999").localeCompare(b.occurred_at_start ?? "9999")).map((event) => (
+                {data.events.length === 0 ? <EmptyState icon={<GitBranch />} title="Aucun événement extrait">Les événements documentaires apparaîtront ici avec leur date originale et leur source.</EmptyState> : [...data.events].sort((a,b) => (a.occurred_at_start ?? "9999").localeCompare(b.occurred_at_start ?? "9999")).map((event) => (
                   <div key={event.id} className="grid grid-cols-[auto_1fr] gap-3 rounded-lg border border-border p-3">
                     <div className="flex min-w-24 flex-col items-center text-center">
                       <span className="text-xs font-semibold">{event.date_precision === "exact" && event.occurred_at_start ? new Date(event.occurred_at_start).toLocaleDateString("fr-FR") : event.original_date_text}</span>
@@ -374,7 +374,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
                   <textarea required value={quoteB} onChange={(event) => setQuoteB(event.target.value)} placeholder="Citation exacte de la deuxième source" className="min-h-16 rounded-md border border-border bg-surface px-3 py-2 text-xs" />
                   <Button type="submit" size="sm" disabled={savingContradiction || !statementA || !statementB || !contradictionTitle.trim() || !contradictionDescription.trim()}>{savingContradiction ? "Enregistrement…" : "Proposer la contradiction"}</Button>
                 </form>}
-                {data.contradictions.length === 0 ? <EmptyState title="Aucune contradiction consignée" description="Les contradictions devront relier des déclarations provenant d'au moins deux sources distinctes." /> : data.contradictions.map((item) => (
+                {data.contradictions.length === 0 ? <EmptyState icon={<AlertTriangle />} title="Aucune contradiction consignée">Les contradictions doivent relier des déclarations provenant d’au moins deux sources distinctes.</EmptyState> : data.contradictions.map((item) => (
                   <div key={item.id} className="rounded-lg border border-border p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="text-sm font-medium">{item.title}</h4><Badge>{item.status === "proposed" ? "À examiner" : item.status}</Badge></div>
                     <p className="mt-1 text-xs text-text-muted">{item.description}</p>
@@ -412,7 +412,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
                   <input value={lineageNote} onChange={(event) => setLineageNote(event.target.value)} maxLength={2000} placeholder="Précision facultative sur la filiation" className="h-10 rounded-md border border-border bg-surface px-3 text-sm" />
                   <Button type="submit" size="sm" disabled={savingLineage || !lineageParent || !lineageChild || lineageParent === lineageChild}>{savingLineage ? "Enregistrement…" : "Enregistrer la filiation"}</Button>
                 </form>}
-                {data.sourceLineage.length === 0 ? <EmptyState title="Aucune filiation enregistrée" description="Les copies, extraits, traductions et transcriptions peuvent être reliés à leur document d'origine pour éviter de compter plusieurs fois une même information." /> : data.sourceLineage.map((lineage) => (
+                {data.sourceLineage.length === 0 ? <EmptyState icon={<ShieldCheck />} title="Aucune filiation enregistrée">Les copies, extraits, traductions et transcriptions peuvent être reliés à leur document d’origine pour éviter de compter plusieurs fois une même information.</EmptyState> : data.sourceLineage.map((lineage) => (
                   <div key={lineage.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-border p-3 text-sm">
                     <button type="button" onClick={() => onOpenSource(lineage.parent_source_id)} className="text-accent hover:underline">{sourceTitle(lineage.parent_source_id)}</button>
                     <ArrowRight className="size-4 text-text-muted"/>
