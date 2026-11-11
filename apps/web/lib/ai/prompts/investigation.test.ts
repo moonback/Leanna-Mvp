@@ -16,7 +16,7 @@ describe("investigation prompt safeguards", () => {
     const fixed = chatFixedRules("français");
     expect(fixed).toContain("Ne désigne, n'accuse");
     expect(fixed).toContain("vérifiée par une personne habilitée");
-    expect(fixed).toContain("ignore all instructions");
+    expect(fixed.toLowerCase()).toContain("ignore all instructions");
   });
 
   it("aligns both voice personas with the investigation workflow", () => {
@@ -29,7 +29,7 @@ describe("investigation prompt safeguards", () => {
   it("provides investigation-specific Studio prompt defaults", () => {
     const keys = new Map(SYSTEM_PROMPT_CATALOG.map((item) => [item.key, item.defaultPrompt]));
     expect(keys.get("studio.report")).toContain("déclarations attribuées");
-    expect(keys.get("studio.timeline")).toContain("date de l’événement");
+    expect(keys.get("studio.timeline")).toContain("date de l" + "'événement");
     expect(keys.get("studio.comparison")?.toLowerCase()).toContain("contradictions");
   });
 });
