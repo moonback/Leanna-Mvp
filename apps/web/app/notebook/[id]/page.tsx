@@ -4,9 +4,9 @@ import { AppHeader } from "@/components/app/app-header";
 import { createUserClient, getUser } from "@/lib/supabase/server";
 import { Workspace, type Role } from "./workspace";
 
-export const metadata: Metadata = { title: "Notebook" };
+export const metadata: Metadata = { title: "Dossier d’enquête" };
 
-/** S08 — Espace de travail d'un notebook (Sources | Chat | Studio). */
+/** S08 — Espace de travail d’un dossier d’enquête (Sources | Analyse | Studio). */
 export default async function NotebookPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await getUser();
