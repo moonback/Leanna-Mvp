@@ -36,7 +36,8 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
   const [error, setError] = React.useState(false);
   const [kind, setKind] = React.useState<Kind>("entity");
   const [formOpen, setFormOpen] = React.useState(false);
-  const [saving, setSaving] = React.useState(false);\n  const [extracting, setExtracting] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const [extracting, setExtracting] = React.useState(false);
   const [sourceId, setSourceId] = React.useState("");
   const [fields, setFields] = React.useState<Record<string,string>>({});
 
@@ -51,7 +52,8 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
   }, [notebookId]);
   React.useEffect(() => { void load(); }, [load]);
 
-  const set = (key: string, value: string) => setFields((old) => ({ ...old, [key]: value }));\n  const startExtraction = async () => {
+  const set = (key: string, value: string) => setFields((old) => ({ ...old, [key]: value }));
+  const startExtraction = async () => {
     setExtracting(true);
     try {
       const res = await fetch(`/api/v1/notebooks/${notebookId}/investigation/extract`, { method: "POST" });
