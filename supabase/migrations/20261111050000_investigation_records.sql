@@ -221,10 +221,13 @@ begin
   loop
     v_source := (v_item ->> 'id')::uuid;
     v_version := v_item ->> 'version';
-    if v_version is null or not exists (
-      select 1 from public.sources s where s.id = v_source and s.notebook_id = p_notebook
-        and s.workspace_id = v_ws and s.status = 'ready' and s.updated_at = v_version::timestamptz
-    ) then
+    if v_version is null then
+      raise exception 'source_not_ready_or_changed' using errcode = 'P0001';
+    end if;
+    perform 1 from public.sources s where s.id = v_source and s.notebook_id = p_notebook
+      and s.workspace_id = v_ws and s.status = 'ready' and s.updated_at = v_version::timestamptz
+      for update;
+    if not found then
       raise exception 'source_not_ready_or_changed' using errcode = 'P0001';
     end if;
     insert into public.jobs (workspace_id, notebook_id, user_id, kind, target_id, payload, idempotency_key)
