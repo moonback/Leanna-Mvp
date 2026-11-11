@@ -10,6 +10,7 @@ import { Alert, Badge, EmptyState } from "@/components/ui/feedback";
 import { Card } from "@/components/ui/surfaces";
 import { toast } from "@/components/ui/toast";
 
+type Discovery = { id: string; source_name: "116000" | "arpd"; source_url: string; source_item_id: string; title: string; excerpt: string | null; published_at: string | null; publication_status: string; first_seen_at: string; last_seen_at: string };
 type Notice = {
   id: string; source_id: string; source_name: "arpd" | "116000" | "interpol";
   source_url: string; source_reference: string | null; person_name: string;
@@ -24,6 +25,8 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
   const router = useRouter();
   const [creatingDossierFor, setCreatingDossierFor] = React.useState<string | null>(null);
   const [notices, setNotices] = React.useState<Notice[]>([]);
+  const [discoveries, setDiscoveries] = React.useState<Discovery[]>([]);
+  const [importingDiscovery, setImportingDiscovery] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState(false);
@@ -43,6 +46,7 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
       if (!response.ok) throw new Error();
       const json = await response.json();
       setNotices(json.notices ?? []);
+      setDiscoveries(json.discoveries ?? []);
     } catch { setError(true); }
     finally { setLoading(false); }
   }, [notebookId]);
@@ -64,6 +68,17 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
     finally { setSaving(false); }
   }
 
+  async function importDiscovery(item: Discovery) {
+    setImportingDiscovery(item.id);
+    try {
+      const response = await fetch("/api/v1/notebooks/" + notebookId + "/notices", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ catalogId: item.id }) });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.error === "notice_already_imported" ? "Cette publication est déjà dans le dossier." : "Import impossible. Réessayez.");
+      toast({ title: "Publication ajoutée au dossier", description: "La fiche est en attente de revue humaine." });
+      await load();
+    } catch (e) { toast({ title: "Import impossible", description: e instanceof Error ? e.message : "Réessayez.", tone: "error" }); }
+    finally { setImportingDiscovery(null); }
+  }
   async function review(notice: Notice, patch: Record<string, string>) {
     const response = await fetch(`/api/v1/notebooks/${notebookId}/notices/${notice.id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(patch) });
     if (!response.ok) return toast({ title: "Mise à jour impossible", tone: "error" });
@@ -93,8 +108,8 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
-          <Badge>Sites pris en charge : ARPD, 116 000, INTERPOL</Badge>
-          <Badge tone="warning">Import manuel — pas de scraping automatique</Badge>
+          <Badge tone="success">Veille automatique activée : 116 000</Badge>
+          <Badge>ARPD et INTERPOL : consultation / import manuel</Badge>
         </div>
         {canEdit && <Button onClick={() => setFormOpen((v) => !v)}><Plus aria-hidden /> Ajouter un avis</Button>}
       </div>
@@ -128,6 +143,25 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
           </form>
         </Card>
       )}
+      <section className="grid gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div><h2 className="font-semibold">Nouvelles publications détectées</h2><p className="text-sm text-text-muted">Flux public 116 000 vérifié automatiquement toutes les 15 minutes. Chaque publication reste à examiner avant d'être ajoutée à une enquête.</p></div>
+          <Badge>{discoveries.length} à examiner</Badge>
+        </div>
+        {discoveries.length === 0 ? <p className="text-sm text-text-muted">Aucune nouvelle publication détectée pour le moment.</p> : discoveries.map((item) => (
+          <Card key={item.id} className="grid gap-2 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0"><p className="text-xs text-text-muted">{SOURCE_LABELS[item.source_name]} · détecté le {new Date(item.first_seen_at).toLocaleDateString("fr-FR")}</p><h3 className="font-medium">{item.title}</h3></div>
+              <Badge tone={item.publication_status === "changed" ? "warning" : "secondary"}>{item.publication_status === "changed" ? "Publication modifiée" : "Nouvelle publication"}</Badge>
+            </div>
+            {item.excerpt && <p className="text-sm text-text-muted">{item.excerpt}</p>}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-2">
+              <Link href={item.source_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-accent hover:underline"><ExternalLink aria-hidden className="size-4" /> Ouvrir la publication originale</Link>
+              {canEdit && <Button size="sm" loading={importingDiscovery === item.id} disabled={importingDiscovery !== null} onClick={() => void importDiscovery(item)}>Ajouter à ce dossier</Button>}
+            </div>
+          </Card>
+        ))}
+      </section>
       {error && <Alert tone="danger" title="Impossible de charger les avis" action={<Button size="sm" variant="secondary" onClick={() => void load()}>Réessayer</Button>} />}
       {loading ? <p className="text-sm text-text-muted">Chargement…</p> : notices.length === 0 ? (
         <Card><EmptyState icon={<FileText />} title="Aucun avis dans ce dossier">Ajoutez l’URL d’un avis officiel ou associatif publié pour l’archiver comme source documentaire.</EmptyState></Card>
