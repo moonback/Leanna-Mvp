@@ -78,7 +78,7 @@ export function investigationExtractHandler(db: SupabaseClient, llm: Llm): Handl
         },
         {
           role: "user",
-          content: `Extrais les éléments explicitement présents dans ce passage. Retourne JSON avec trois tableaux : entities [{entity_type: person|place|vehicle|object|organization, label, quote}], events [{title, description, original_date_text, date_precision: exact|approximate|range|unknown, quote}], statements [{statement_type: documented_fact|testimony|unverified_information|hypothesis|contradiction, content, speaker_label|null, quote}]. Limite chaque tableau à 20 entrées. Pour chaque entrée, quote doit être un extrait exact et suffisamment distinctif du passage. Pour les événements, original_date_text doit être copié textuellement du quote. Ne crée aucune piste à vérifier à partir d'un seul passage. Si aucun élément fiable à extraire, retourne des tableaux vides.\n\n<PASSAGE>\n${chunk.content}\n</PASSAGE>`
+          content: "Analyse les éléments explicitement présents. Retourne JSON avec entities, events et statements. Chaque quote doit être une citation exacte du passage. Pour chaque événement, original_date_text doit être copié textuellement de quote. N’invente rien, ne crée aucune piste et retourne des tableaux vides si rien ne peut être extrait. Passage encodé en JSON : " + JSON.stringify(chunk.content),
         },
       ], { json: true, maxTokens: 2600 });
       const result = parseExtraction(response.text);
@@ -110,7 +110,7 @@ export function investigationExtractHandler(db: SupabaseClient, llm: Llm): Handl
         if (local < 0 || !item.quote.includes(item.content)) continue;
         statementRows.push({
           workspace_id: source.workspace_id, notebook_id: source.notebook_id, source_id: source.id,
-          statement_type: item.statement_type, content: item.content, speaker_label: item.speaker_label,
+          statement_type: item.statement_type, content: item.content, speaker_label: item.speaker_label && item.quote.includes(item.speaker_label) ? item.speaker_label : null,
           context_excerpt: item.quote, page_number: chunk.page_start,
           char_start: chunk.char_start + local, char_end: chunk.char_start + local + item.quote.length,
           origin: "ai_extracted", extraction_key: key([source.id, chunk.id, "statement", item.statement_type, item.content, item.quote]),
@@ -134,9 +134,20 @@ export function investigationExtractHandler(db: SupabaseClient, llm: Llm): Handl
       extracted.statements = statementRows.length;
     }
 
+    const requestedBy = typeof payload.requested_by === "string" ? payload.requested_by : null;
+    const insertedCount = entityRows.length + eventRows.length + statementRows.length;
+    if (insertedCount > 0) {
+      const { error: auditError } = await db.from("audit_log").insert({
+        workspace_id: source.workspace_id, actor_id: requestedBy, action: "investigation.extract.batch",
+        target_type: "source", target_id: source.id,
+        meta: { notebook_id: source.notebook_id, offset, processed_chunks: chunks.length, extracted },
+      });
+      if (auditError) throw auditError;
+    }
+    await ctx.progress(95, "enregistrement");
+
     const nextOffset = offset + chunks.length;
     if (count !== null && nextOffset < count) {
-      const requestedBy = typeof payload.requested_by === "string" ? payload.requested_by : null;
       const nextKey = `investigation-extract:${source.id}:${version}:${nextOffset}`;
       const { error: queueError } = await db.from("jobs").upsert({
         workspace_id: source.workspace_id, notebook_id: source.notebook_id, user_id: requestedBy,
