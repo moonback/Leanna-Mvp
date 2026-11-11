@@ -74,8 +74,8 @@ export function investigationCrosscheckHandler(db: SupabaseClient, llm: Llm): Ha
 
     await ctx.progress(15, "comparaison_multi_sources");
     const input = records.map((record) => ({
-      id: record.id, source_id: record.source_id, kind: record.kind, label: record.label,
-      detail: record.detail, quote: record.quote.slice(0, 500),
+      id: record.id, source_id: record.source_id, kind: record.kind, label: record.label.slice(0, 240),
+      detail: record.detail.slice(0, 300), quote: record.quote.slice(0, 450),
       page_number: record.page_number, verification_status: record.verification_status,
     }));
     const response = await llm([
