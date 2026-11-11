@@ -46,9 +46,9 @@ export function investigationCrosscheckHandler(db: SupabaseClient, llm: Llm): Ha
   return async (job, ctx) => {
     if (!job.notebook_id) throw new PermanentError("crosscheck_job_invalid");
     const [entities, events, statements] = await Promise.all([
-      db.from("investigation_entities").select("id, source_id, label, entity_type, context_excerpt, page_number, char_start, verification_status, created_at").eq("notebook_id", job.notebook_id).order("created_at", { ascending: false }).limit(120),
-      db.from("investigation_events").select("id, source_id, title, description, original_date_text, context_excerpt, page_number, char_start, verification_status, created_at").eq("notebook_id", job.notebook_id).order("created_at", { ascending: false }).limit(120),
-      db.from("investigation_statements").select("id, source_id, content, statement_type, speaker_label, context_excerpt, page_number, char_start, verification_status, created_at").eq("notebook_id", job.notebook_id).order("created_at", { ascending: false }).limit(120),
+      db.from("investigation_entities").select("id, source_id, label, entity_type, context_excerpt, page_number, char_start, verification_status, created_at").eq("notebook_id", job.notebook_id).order("created_at", { ascending: false }).limit(60),
+      db.from("investigation_events").select("id, source_id, title, description, original_date_text, context_excerpt, page_number, char_start, verification_status, created_at").eq("notebook_id", job.notebook_id).order("created_at", { ascending: false }).limit(60),
+      db.from("investigation_statements").select("id, source_id, content, statement_type, speaker_label, context_excerpt, page_number, char_start, verification_status, created_at").eq("notebook_id", job.notebook_id).order("created_at", { ascending: false }).limit(60),
     ]);
     for (const result of [entities,events,statements]) if (result.error) throw result.error;
     const records: EvidenceRecord[] = [
@@ -63,7 +63,7 @@ export function investigationCrosscheckHandler(db: SupabaseClient, llm: Llm): Ha
     await ctx.progress(15, "comparaison_multi_sources");
     const input = records.map((record) => ({
       id: record.id, source_id: record.source_id, kind: record.kind, label: record.label,
-      detail: record.detail, quote: record.quote.slice(0, 700),
+      detail: record.detail, quote: record.quote.slice(0, 500),
       page_number: record.page_number, verification_status: record.verification_status,
     }));
     const response = await llm([
