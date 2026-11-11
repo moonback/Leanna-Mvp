@@ -14,7 +14,7 @@ type Entity = Common & { entity_type: string; label: string };
 type EventRecord = Common & { title: string; description: string; original_date_text: string; date_precision: string };
 type Statement = Common & { statement_type: string; content: string; speaker_label?: string | null };
 type Lead = Common & { title: string; verification_question: string; supporting_excerpt: string; counter_evidence: string; next_check: string; confidence: string; status: string };
-type ExtractionJob = { id: string; target_id: string | null; status: string; progress: number; stage: string | null; error_code: string | null; created_at: string };
+type ExtractionJob = { id: string; kind: string; target_id: string | null; status: string; progress: number; stage: string | null; error_code: string | null; created_at: string };
 type Data = { entities: Entity[]; events: EventRecord[]; statements: Statement[]; leads: Lead[]; extractionJobs: ExtractionJob[] };
 type Kind = "entity" | "event" | "statement" | "lead";
 
@@ -39,6 +39,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
   const [formOpen, setFormOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [extracting, setExtracting] = React.useState(false);
+  const [crosschecking, setCrosschecking] = React.useState(false);
   const [sourceId, setSourceId] = React.useState("");
   const [fields, setFields] = React.useState<Record<string,string>>({});
 
@@ -73,6 +74,20 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
     } finally { setExtracting(false); }
   };
 
+
+  const startCrosscheck = async () => {
+    setCrosschecking(true);
+    try {
+      const res = await fetch(`/api/v1/notebooks/${notebookId}/investigation/crosscheck`, { method: "POST" });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error ?? "crosscheck_failed");
+      toast({ title: "Recoupement multi-sources planifié", description: `${result.source_count} sources vont être comparées. Les pistes proposées resteront à valider.`, tone: "success" });
+      await load();
+    } catch (e) {
+      const code = e instanceof Error ? e.message : "crosscheck_failed";
+      toast({ title: code === "ai_not_configured" ? "Modèle IA non configuré" : code === "insufficient_sources" ? "Pas assez de sources recoupables" : "Recoupement impossible", description: code, tone: "error" });
+    } finally { setCrosschecking(false); }
+  };
 
   const begin = (next: Kind) => {
     setKind(next);
@@ -132,18 +147,22 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
   ];
 
   return (
-    <Panel id="investigation" title="Éléments d’enquête" className="h-full" actions={canEdit && <span className="flex items-center gap-1"><Button size="sm" variant="secondary" onClick={() => void startExtraction()} disabled={extracting || !sources.some((s) => s.status === "ready")}>{extracting ? "Planification…" : "Analyser avec l’IA"}</Button><Button size="sm" onClick={() => begin("entity")}><Plus aria-hidden /> Ajouter</Button></span>}>
+    <Panel id="investigation" title="Éléments d’enquête" className="h-full" actions={canEdit && <Button size="sm" onClick={() => begin("entity")}><Plus aria-hidden /> Ajouter</Button>}>
       <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto p-3">
         <div className="rounded-lg border border-border-subtle bg-surface-secondary p-3">
           <div className="flex items-center gap-2 text-sm font-medium"><AlertTriangle className="size-4 text-warning" /> Traçabilité et validation humaine</div>
           <p className="mt-1 text-xs text-text-muted">Une mention est un élément consigné dans une source, pas une preuve indépendante. Les pistes restent à vérifier.</p>
         </div>
+        {canEdit && <div className="grid grid-cols-2 gap-2">
+          <Button size="sm" variant="secondary" onClick={() => void startExtraction()} disabled={extracting || !sources.some((s) => s.status === "ready")}>{extracting ? "Planification…" : "Analyser les sources"}</Button>
+          <Button size="sm" variant="secondary" onClick={() => void startCrosscheck()} disabled={crosschecking || data.entities.length + data.events.length + data.statements.length < 2}>{crosschecking ? "Planification…" : "Croiser les sources"}</Button>
+        </div>}
         {data.extractionJobs.length > 0 && <section className="grid gap-2">
           <h3 className="text-sm font-semibold">Analyses IA récentes</h3>
           {data.extractionJobs.map((job) => <div key={job.id} className="flex items-center justify-between gap-3 rounded-md border border-border p-2 text-xs">
-            <span className="min-w-0 truncate">{sourceName(job.target_id ?? "")}</span>
+            <span className="min-w-0 truncate">{job.kind === "investigation_crosscheck" ? "Recoupement multi-sources" : sourceName(job.target_id ?? "")}</span>
             <span className="flex shrink-0 items-center gap-2">
-              <span className="text-text-muted">{job.status === "queued" ? "En attente" : job.status === "running" ? (job.stage ?? "Analyse en cours") : job.status === "succeeded" ? "Terminé" : job.status === "failed" ? (job.error_code ?? "Échec") : job.status}</span>
+              <span className="text-text-muted">{job.status === "queued" ? "En attente" : job.status === "running" ? (job.stage ?? (job.kind === "investigation_crosscheck" ? "Recoupement" : "Analyse en cours")) : job.status === "succeeded" ? "Terminé" : job.status === "failed" ? (job.error_code ?? "Échec") : job.status}</span>
               <Badge tone={job.status === "succeeded" ? "success" : job.status === "failed" ? "danger" : job.status === "running" || job.status === "queued" ? "accent" : "neutral"}>{job.status === "running" ? `${job.progress}%` : statusLabel[job.status] ?? job.status}</Badge>
             </span>
           </div>)}
