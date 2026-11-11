@@ -14,7 +14,8 @@ type Entity = Common & { entity_type: string; label: string };
 type EventRecord = Common & { title: string; description: string; original_date_text: string; date_precision: string };
 type Statement = Common & { statement_type: string; content: string; speaker_label?: string | null };
 type Lead = Common & { title: string; verification_question: string; supporting_excerpt: string; counter_evidence: string; next_check: string; confidence: string; status: string };
-type ExtractionJob = { id: string; target_id: string | null; status: string; progress: number; stage: string | null; error_code: string | null; created_at: string };\ntype Data = { entities: Entity[]; events: EventRecord[]; statements: Statement[]; leads: Lead[]; extractionJobs: ExtractionJob[] };
+type ExtractionJob = { id: string; target_id: string | null; status: string; progress: number; stage: string | null; error_code: string | null; created_at: string };
+type Data = { entities: Entity[]; events: EventRecord[]; statements: Statement[]; leads: Lead[]; extractionJobs: ExtractionJob[] };
 type Kind = "entity" | "event" | "statement" | "lead";
 
 const empty: Data = { entities: [], events: [], statements: [], leads: [], extractionJobs: [] };
@@ -141,7 +142,8 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
               <Badge tone={job.status === "succeeded" ? "success" : job.status === "failed" ? "danger" : job.status === "running" || job.status === "queued" ? "accent" : "neutral"}>{job.status === "running" ? `${job.progress}%` : statusLabel[job.status] ?? job.status}</Badge>
             </span>
           </div>)}
-        </section>}\n        {canEdit && <div className="grid grid-cols-2 gap-2">
+        </section>}
+        {canEdit && <div className="grid grid-cols-2 gap-2">
           <Button size="sm" variant="secondary" onClick={() => begin("entity")}>Personne / lieu / objet</Button>
           <Button size="sm" variant="secondary" onClick={() => begin("event")}>Événement</Button>
           <Button size="sm" variant="secondary" onClick={() => begin("statement")}>Déclaration</Button>
