@@ -9,7 +9,7 @@ const MAX_FEED_BYTES = 2_000_000;
 type FeedItem = { id: string; url: string; title: string; excerpt: string | null; publishedAt: string | null };
 
 function clean(value: string | null | undefined, max: number): string {
-  return (value ?? "").replace(/\\s+/g, " ").trim().slice(0, max);
+  return (value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 }
 
 function parseFeed(xml: string): FeedItem[] {
@@ -67,7 +67,7 @@ export async function syncMissingPersonNoticeFeed(db: SupabaseClient): Promise<n
     if (raw.byteLength > MAX_FEED_BYTES) throw new Error("feed_too_large");
     const xml = new TextDecoder("utf-8", { fatal: false }).decode(raw);
     const items = parseFeed(xml);
-    if (!items.length && !/<(?:rss|feed)\\b/i.test(xml)) throw new Error("invalid_feed");
+    if (!items.length && !/<(?:rss|feed)\b/i.test(xml)) throw new Error("invalid_feed");
     const now = new Date().toISOString();
 
     for (const item of items) {
