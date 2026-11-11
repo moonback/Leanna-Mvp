@@ -1,7 +1,7 @@
 -- Graphe d'enquête : isolation, provenance, relations, contradictions et filiation acyclique.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(10);
+select plan(9);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000001a', 'graph-owner@test.local'),
