@@ -14,7 +14,7 @@ type Entity = Common & { entity_type: string; label: string };
 type EventRecord = Common & { title: string; description: string; original_date_text: string; date_precision: string };
 type Statement = Common & { statement_type: string; content: string; speaker_label?: string | null };
 type Lead = Common & { title: string; verification_question: string; supporting_excerpt: string; counter_evidence: string; next_check: string; confidence: string; status: string };
-type ExtractionJob = { id: string; kind: string; target_id: string | null; status: string; progress: number; stage: string | null; error_code: string | null; created_at: string };
+type ExtractionJob = { id: string; kind: string; target_id: string | null; status: string; progress: number; stage: string | null; error_code: string | null; result: Record<string, unknown> | null; created_at: string };
 type LeadEvidence = { id: string; lead_id: string; source_id: string; evidence_role: "support" | "contrary"; quote: string; page_number: number | null };
 type Data = { entities: Entity[]; events: EventRecord[]; statements: Statement[]; leads: Lead[]; leadEvidence: LeadEvidence[]; extractionJobs: ExtractionJob[] };
 type Kind = "entity" | "event" | "statement" | "lead";
@@ -165,7 +165,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
           {data.extractionJobs.map((job) => <div key={job.id} className="flex items-center justify-between gap-3 rounded-md border border-border p-2 text-xs">
             <span className="min-w-0 truncate">{job.kind === "investigation_crosscheck" ? "Recoupement multi-sources" : sourceName(job.target_id ?? "")}</span>
             <span className="flex shrink-0 items-center gap-2">
-              <span className="text-text-muted">{job.status === "queued" ? "En attente" : job.status === "running" ? (job.stage ?? (job.kind === "investigation_crosscheck" ? "Recoupement" : "Analyse en cours")) : job.status === "succeeded" ? "Terminé" : job.status === "failed" ? (job.error_code ?? "Échec") : job.status}</span>
+              <span className="text-text-muted">{job.status === "queued" ? "En attente" : job.status === "running" ? (job.stage ?? (job.kind === "investigation_crosscheck" ? "Recoupement" : "Analyse en cours")) : job.status === "succeeded" && job.kind === "investigation_crosscheck" ? `${String(job.result?.leads_created ?? 0)} piste(s) proposées` : job.status === "succeeded" ? "Terminé" : job.status === "failed" ? (job.error_code ?? "Échec") : job.status}</span>
               <Badge tone={job.status === "succeeded" ? "success" : job.status === "failed" ? "danger" : job.status === "running" || job.status === "queued" ? "accent" : "neutral"}>{job.status === "running" ? `${job.progress}%` : statusLabel[job.status] ?? job.status}</Badge>
             </span>
           </div>)}
