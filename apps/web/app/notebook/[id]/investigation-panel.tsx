@@ -151,7 +151,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
 
   return (
     <Panel id="investigation" title="Éléments d’enquête" className="h-full" actions={canEdit && <Button size="sm" onClick={() => begin("entity")}><Plus aria-hidden /> Ajouter</Button>}>
-      <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto p-3">
+      <div className="flex min-h-full flex-col gap-3 p-3">
         <div className="rounded-lg border border-border-subtle bg-surface-secondary p-3">
           <div className="flex items-center gap-2 text-sm font-medium"><AlertTriangle className="size-4 text-warning" /> Traçabilité et validation humaine</div>
           <p className="mt-1 text-xs text-text-muted">Une mention est un élément consigné dans une source, pas une preuve indépendante. Les pistes restent à vérifier.</p>
