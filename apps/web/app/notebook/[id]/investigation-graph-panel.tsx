@@ -92,7 +92,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? "node_create_failed");
-      toast({ title: "Nœud candidat créé", description: "L'identité reste à confirmer par un éditeur.", tone: "success" });
+      toast({ title: clusterId ? "Rapprochement proposé" : "Nœud candidat créé", description: clusterId ? "La mention est rattachée au nœud en attente de revue." : "Le nœud reste à confirmer par un éditeur.", tone: "success" });
       await load();
     } catch (error) {
       toast({ title: "Création impossible", description: error instanceof Error ? error.message : "node_create_failed", tone: "error" });
@@ -240,7 +240,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
                     <div key={cluster.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3">
                       <div className="min-w-0">
                         <div className="truncate text-sm font-medium">{cluster.canonical_label}</div>
-                        <div className="text-xs text-text-muted">{entityLabels[cluster.entity_type]} · {data.mentions.filter((mention) => mention.cluster_id === cluster.id).length} mention(s) · {cluster.status === "confirmed" ? "Identité confirmée" : cluster.status === "rejected" ? "Rejeté" : "Candidat"}</div>
+                        <div className="text-xs text-text-muted">{entityLabels[cluster.entity_type]} · {data.mentions.filter((mention) => mention.cluster_id === cluster.id).length} mention(s) · {cluster.status === "confirmed" ? "Nœud confirmé" : cluster.status === "rejected" ? "Rejeté" : "Candidat"}</div>
                       </div>
                       {canEdit && cluster.status === "candidate" && <div className="flex gap-1">
                         <Button size="sm" variant="secondary" onClick={() => void review("cluster",cluster.id,"confirmed")}><Check className="size-3.5"/>Confirmer</Button>
