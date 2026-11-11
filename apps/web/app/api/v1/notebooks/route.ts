@@ -31,7 +31,7 @@ export const POST = handle(async (req: NextRequest) => {
     if ((count ?? 0) >= max) throw new ApiError(409, "max_notebooks", { limit: max });
   }
   const { data: nb, error: e2 } = await db
-    .from("notebooks").insert({ workspace_id: ws.id, created_by: user.id, title }).select("id, title, created_at").single();
+    .from("notebooks").insert({ workspace_id: ws.id, created_by: user.id, title: title || "Nouvelle enquête" }).select("id, title, created_at").single();
   if (e2) throw e2;
   log.info("notebook.created", { notebook_id: nb.id, user_id: user.id });
   return NextResponse.json({ notebook: nb }, { status: 201 });
