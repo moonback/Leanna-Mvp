@@ -13,15 +13,18 @@ const SOURCES = {
   interpol: ["interpol.int"],
 } as const;
 
-const createSchema = z.object({
-  sourceName: z.enum(["arpd", "116000", "interpol"]),
-  sourceUrl: z.string().url().max(2048),
-  sourceReference: z.string().trim().max(160).optional().nullable(),
-  personName: z.string().trim().min(1).max(240),
-  publishedDateText: z.string().trim().max(160).optional().nullable(),
-  disappearanceLocation: z.string().trim().max(500).optional().nullable(),
-  publishedSummary: z.string().trim().max(5000).optional().nullable(),
-}).strict();
+const createSchema = z.union([
+  z.object({ catalogId: z.string().uuid() }).strict(),
+  z.object({
+    sourceName: z.enum(["arpd", "116000", "interpol"]),
+    sourceUrl: z.string().url().max(2048),
+    sourceReference: z.string().trim().max(160).optional().nullable(),
+    personName: z.string().trim().min(1).max(240),
+    publishedDateText: z.string().trim().max(160).optional().nullable(),
+    disappearanceLocation: z.string().trim().max(500).optional().nullable(),
+    publishedSummary: z.string().trim().max(5000).optional().nullable(),
+  }).strict(),
+]);
 
 function allowedSourceUrl(raw: string, sourceName: keyof typeof SOURCES): URL {
   let url: URL;
