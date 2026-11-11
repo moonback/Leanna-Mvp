@@ -29,7 +29,7 @@ export default async function MissingPersonNoticesPage({ params }: { params: Pro
         <div>
           <p className="text-sm text-text-muted">Dossier : {notebook.title || "Sans titre"}</p>
           <h1 className="mt-1 text-2xl font-semibold">Avis de recherche</h1>
-          <p className="mt-2 max-w-3xl text-sm text-text-muted">Ajoutez un avis publié par un organisme reconnu. La page originale est importée comme source documentaire du dossier ; les informations structurées restent en attente de revue humaine.</p>
+          <p className="mt-2 max-w-3xl text-sm text-text-muted">Leanna surveille automatiquement le flux public du 116 000. Examinez les nouvelles publications détectées, ajoutez-les à ce dossier ou créez une enquête privée. Les sources sans flux automatisable restent accessibles en import manuel.</p>
         </div>
         <MissingPersonNotices notebookId={id} canEdit={role === "editor" || role === "owner"} />
       </main>
