@@ -9,6 +9,7 @@ export const POST = handle(async (_req: NextRequest, { params }: Params) => {
   const user = await requireUser();
   const { id } = await params;
   await requireRole(id, "editor");
+  if (!process.env.OPENROUTER_API_KEY || !process.env.OPENROUTER_CHAT_MODEL) throw new ApiError(503, "ai_not_configured");
   const db = createServiceClient();
   const { data: notebook, error: notebookError } = await db.from("notebooks")
     .select("id, workspace_id").eq("id", id).maybeSingle();
