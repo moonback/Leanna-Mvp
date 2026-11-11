@@ -68,7 +68,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
       const res = await fetch(`/api/v1/notebooks/${notebookId}/investigation/extract`, { method: "POST" });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error ?? "extract_failed");
-      toast({ title: "Analyse documentaire planifiée", description: `${result.queued_sources} source(s) prête(s) ajoutée(s) à la file d’analyse.`, tone: "success" });
+      toast({ title: "Analyse documentaire planifiée", description: result.queued_sources > 0 ? `${result.queued_sources} source(s) ajoutée(s) à la file d’analyse.` : "Une extraction existe déjà pour chaque source prête de cette version.", tone: "success" });
       await load();
     } catch (e) {
       const code = e instanceof Error ? e.message : "extract_failed";
