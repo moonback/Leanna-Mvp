@@ -30,7 +30,7 @@ type Chunk = { id: string; content: string; char_start: number; page_start: numb
 type Extraction = z.infer<typeof extractionSchema>;
 
 export function parseExtraction(text: string): Extraction {
-  const cleaned = text.trim().replace(/^\`\`\`(?:json)?\s*/i, "").replace(/\s*\`\`\`$/, "");
+  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
   return extractionSchema.parse(JSON.parse(cleaned));
 }
 
