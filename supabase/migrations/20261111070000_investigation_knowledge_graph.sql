@@ -165,6 +165,45 @@ create index investigation_relation_evidence_relation_idx
 create index investigation_relation_evidence_source_idx
   on public.investigation_relation_evidence(notebook_id, source_id);
 
+create function private.validate_investigation_relation_evidence_provenance()
+returns trigger
+language plpgsql
+set search_path = ''
+as $
+declare
+  v_source_id uuid;
+  v_text text;
+begin
+  if new.statement_id is not null then
+    select source_id into v_source_id from public.investigation_statements
+      where id = new.statement_id and notebook_id = new.notebook_id;
+  elsif new.event_id is not null then
+    select source_id into v_source_id from public.investigation_events
+      where id = new.event_id and notebook_id = new.notebook_id;
+  elsif new.entity_mention_id is not null then
+    select source_id into v_source_id from public.investigation_entities e
+      join public.investigation_entity_mentions m on m.entity_id = e.id and m.notebook_id = e.notebook_id
+      where m.id = new.entity_mention_id and m.notebook_id = new.notebook_id;
+  end if;
+  if v_source_id is not null and v_source_id <> new.source_id then
+    raise exception 'evidence_source_mismatch' using errcode = '23514';
+  end if;
+  select extracted_text into v_text from public.sources
+    where id = new.source_id and notebook_id = new.notebook_id;
+  if v_text is null or position(new.quote in v_text) = 0 then
+    raise exception 'evidence_quote_not_found' using errcode = '23514';
+  end if;
+  if new.char_start is not null and substring(v_text from new.char_start + 1 for new.char_end - new.char_start) <> new.quote then
+    raise exception 'evidence_offset_mismatch' using errcode = '23514';
+  end if;
+  return new;
+end;
+$;
+revoke all on function private.validate_investigation_relation_evidence_provenance() from public, anon, authenticated;
+create trigger investigation_relation_evidence_validate
+  before insert or update on public.investigation_relation_evidence
+  for each row execute function private.validate_investigation_relation_evidence_provenance();
+
 create table public.investigation_contradictions (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null,
@@ -208,6 +247,36 @@ create table public.investigation_contradiction_evidence (
 );
 create index investigation_contradiction_evidence_idx
   on public.investigation_contradiction_evidence(notebook_id, contradiction_id);
+
+create function private.validate_investigation_contradiction_evidence_provenance()
+returns trigger
+language plpgsql
+set search_path = ''
+as $
+declare
+  v_source_id uuid;
+  v_text text;
+begin
+  select source_id into v_source_id from public.investigation_statements
+    where id = new.statement_id and notebook_id = new.notebook_id;
+  if v_source_id is null or v_source_id <> new.source_id then
+    raise exception 'evidence_source_mismatch' using errcode = '23514';
+  end if;
+  select extracted_text into v_text from public.sources
+    where id = new.source_id and notebook_id = new.notebook_id;
+  if v_text is null or position(new.quote in v_text) = 0 then
+    raise exception 'evidence_quote_not_found' using errcode = '23514';
+  end if;
+  if new.char_start is not null and substring(v_text from new.char_start + 1 for new.char_end - new.char_start) <> new.quote then
+    raise exception 'evidence_offset_mismatch' using errcode = '23514';
+  end if;
+  return new;
+end;
+$;
+revoke all on function private.validate_investigation_contradiction_evidence_provenance() from public, anon, authenticated;
+create trigger investigation_contradiction_evidence_validate
+  before insert or update on public.investigation_contradiction_evidence
+  for each row execute function private.validate_investigation_contradiction_evidence_provenance();
 
 create trigger touch_updated_at before update on public.investigation_entity_clusters
   for each row execute function private.touch_updated_at();
