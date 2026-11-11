@@ -70,6 +70,8 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
     publishedSummary: body.publishedSummary ?? null,
   };
   const contentHash = createHash("sha256").update(JSON.stringify(snapshot)).digest("hex");
+  const { data: duplicate } = await db.from("missing_person_notices").select("id").eq("notebook_id", id).eq("content_hash", contentHash).maybeSingle();
+  if (duplicate) throw new ApiError(409, "notice_already_imported", { noticeId: duplicate.id });
   const { data: sourceId, error: sourceError } = await db.rpc("add_source", {
     p_notebook: id,
     p_user: user.id,
