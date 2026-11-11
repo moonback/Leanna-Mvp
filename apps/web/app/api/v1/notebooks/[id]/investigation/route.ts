@@ -66,7 +66,7 @@ export const GET = handle(async (_req: NextRequest, { params }: Params) => {
     db.from("investigation_statements").select("*").eq("notebook_id", id).order("created_at", { ascending: false }),
     db.from("investigation_leads").select("*").eq("notebook_id", id).order("created_at", { ascending: false }),
     db.from("investigation_lead_evidence").select("id, lead_id, source_id, evidence_role, quote, page_number").eq("notebook_id", id).order("created_at", { ascending: true }),
-    db.from("jobs").select("id, target_id, status, progress, stage, error_code, created_at").eq("notebook_id", id).eq("kind", "investigation_extract").order("created_at", { ascending: false }).limit(30),
+    db.from("jobs").select("id, kind, target_id, status, progress, stage, error_code, created_at").eq("notebook_id", id).in("kind", ["investigation_extract", "investigation_crosscheck"]).order("created_at", { ascending: false }).limit(30),
   ]);
   for (const result of [entities,events,statements,leads,leadEvidence,extractionJobs]) if (result.error) throw result.error;
   return NextResponse.json({
