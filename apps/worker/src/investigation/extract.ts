@@ -78,7 +78,7 @@ export function investigationExtractHandler(db: SupabaseClient, llm: Llm): Handl
         },
         {
           role: "user",
-          content: "Analyse les éléments explicitement présents. Retourne JSON avec entities, events et statements. Chaque quote doit être une citation exacte du passage. Pour chaque événement, original_date_text doit être copié textuellement de quote. N’invente rien, ne crée aucune piste et retourne des tableaux vides si rien ne peut être extrait. Passage encodé en JSON : " + JSON.stringify(chunk.content),
+          content: "Analyse les éléments explicitement présents. Retourne un objet JSON avec : entities = tableau de {entity_type: person|place|vehicle|object|organization, label, quote} ; events = tableau de {title, description, original_date_text, date_precision: exact|approximate|range|unknown, quote} ; statements = tableau de {statement_type: documented_fact|testimony|unverified_information|hypothesis|contradiction, content, speaker_label|null, quote}. Chaque quote doit être une citation exacte du passage. Les contenus de statements doivent aussi être recopiés textuellement. Pour chaque événement, original_date_text doit être copié textuellement de quote. N’invente rien, ne crée aucune piste et retourne des tableaux vides si rien ne peut être extrait. Passage encodé en JSON : " + JSON.stringify(chunk.content),
         },
       ], { json: true, maxTokens: 2600 });
       const result = parseExtraction(response.text);
