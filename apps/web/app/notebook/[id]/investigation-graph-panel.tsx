@@ -62,8 +62,10 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
   React.useEffect(() => { void load(); }, [load]);
 
   const sourceTitle = (id: string) => sources.find((source) => source.id === id)?.title ?? "Source du dossier";
-  const linkedEntityIds = new Set(data.mentions.map((mention) => mention.entity_id));
-  const unlinkedEntities = data.entityRecords.filter((entity) => !linkedEntityIds.has(entity.id));
+  const unlinkedEntities = data.entityRecords.filter((entity) => {
+    const existing = data.mentions.find((mention) => mention.entity_id === entity.id);
+    return !existing || existing.match_status === "rejected";
+  });
   const confirmedClusters = data.clusters.filter((cluster) => cluster.status === "confirmed");
 
   const createNode = async (entity: EntityRecord, clusterId?: string) => {
