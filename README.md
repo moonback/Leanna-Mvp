@@ -10,7 +10,7 @@ Leanna Notebook est une application SaaS multi-utilisateur fondée sur Next.js, 
 |---|---|---|
 | Dossiers d’enquête | Organisation documentaire, membres, liens de partage, visites et copie | Le modèle de données conserve le nom technique `notebooks` ; le parcours métier est en cours de spécialisation |
 | Sources | Import, traitement, sélection, recherche et citations | OCR des PDF scannés non confirmé |
-| Analyse d’enquête | Chat streaming, recherche hybride, citations résolues ; prompts orientés disparitions, chronologie, déclarations, contradictions et pistes de vérification | Les pistes générées restent des propositions à valider humainement ; les entités et pistes structurées ne sont pas encore persistées comme objets métier dédiés |
+| Analyse d’enquête | Chat streaming, recherche hybride, citations résolues ; prompts orientés disparitions, chronologie, déclarations, contradictions et pistes de vérification | Les pistes restent des propositions à valider humainement ; le registre structuré et l’extraction IA des entités/événements/déclarations sont disponibles sur demande |
 | Studio | Rapports, fiches, quiz, cartes mentales, infographies, chronologies, comparatifs, glossaires, FAQ, diagrammes, contenus éditoriaux et plans d'étude | 13 types acceptés par l'API ; résultats visuels non validés exhaustivement |
 | Audio Overview | Script dialogué à deux voix, TTS segmenté, mixage ffmpeg et MP3 privé | Nécessite les identifiants TTS et ffmpeg sur le worker |
 | Mode vocal | Gemini Live, recherche RAG, Leanna et co-animatrice Roxane | Roxane est désactivée par défaut ; deux premiers échanges silencieux |
@@ -147,7 +147,7 @@ Documents importants :
 
 ## État de la réorientation produit
 
-Cette branche amorce la spécialisation du produit : prompts de chat et de voix, catalogue du Studio, vocabulaire de l’interface et documentation. Le modèle de données reste actuellement celui de Notebook (sources, citations, messages et notebooks). Un second chantier devra ajouter des objets d’enquête structurés — personnes mentionnées, événements, déclarations, contradictions et pistes — avec provenance, statut de vérification, contrôle d’accès et journal d’audit, puis leurs écrans de revue humaine.
+Cette branche ajoute les fondations métier du dossier d’enquête : entités mentionnées, événements, déclarations et pistes persistées, chacune rattachée à une source du même dossier. Le panneau permet la saisie, la revue humaine et le lancement explicite d’une extraction IA par lots. Les extraits IA ne sont enregistrés que s’ils correspondent exactement au texte source ; les traitements sont idempotents et journalisés. Les relations entre entités, le recoupement multi-sources automatique, la résolution des homonymes et la génération assistée de pistes restent des étapes ultérieures.
 
 ## Contribution
 
