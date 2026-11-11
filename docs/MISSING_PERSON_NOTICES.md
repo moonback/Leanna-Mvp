@@ -2,7 +2,7 @@
 
 ## Périmètre
 
-Le module permet d'archiver dans un dossier d'enquête un avis de recherche publié par l'ARPD, le dispositif 116 000 Enfants Disparus ou INTERPOL (notice jaune). L'URL originale est également créée comme source web via le pipeline d'ingestion existant ; la fiche structurée reste liée à cette source et au notebook qui la contient.
+Le module permet d'archiver dans un dossier d'enquête un avis de recherche publié par l'ARPD, le dispositif 116 000 Enfants Disparus ou INTERPOL (notice jaune). L'URL originale est également créée comme source web via le pipeline d'ingestion existant ; la fiche structurée reste liée à cette source et au notebook qui la contient. Depuis une fiche importée, un éditeur peut créer un nouveau dossier privé prérempli avec le même avis ; la source est réingérée dans le nouveau dossier.
 
 ## Collecte
 
