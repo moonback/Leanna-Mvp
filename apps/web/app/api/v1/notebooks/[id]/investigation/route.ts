@@ -16,7 +16,8 @@ const entitySchema = z.object({
   label: z.string().trim().min(1).max(240),
   char_start: z.number().int().nonnegative().nullable().optional(),
   char_end: z.number().int().positive().nullable().optional(),
-}).strict().refine(v => v.char_start == null || v.char_end == null || v.char_end > v.char_start, "Offsets invalides.");
+}).strict().refine(v => v.char_start == null || v.char_end == null || v.char_end > v.char_start, "Offsets invalides.")
+  .refine(v => v.context_excerpt.includes(v.label), "Le libellé doit apparaître dans l’extrait source.");
 const eventSchema = z.object({
   kind: z.literal("event"), ...sourceFields,
   title: z.string().trim().min(1).max(240),
@@ -82,10 +83,13 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
   const body = await parseBody(req, createSchema);
   const db = createServiceClient();
   const { data: source, error: sourceError } = await db.from("sources")
-    .select("id, workspace_id, status").eq("id", body.source_id).eq("notebook_id", id).maybeSingle();
+    .select("id, workspace_id, status, extracted_text").eq("id", body.source_id).eq("notebook_id", id).maybeSingle();
   if (sourceError) throw sourceError;
   if (!source) throw new ApiError(422, "source_not_in_dossier");
   if (source.status !== "ready") throw new ApiError(409, "source_not_ready");
+  const exactExcerpt = body.kind === "lead" ? body.supporting_excerpt : body.context_excerpt;
+  if (!source.extracted_text || !source.extracted_text.includes(exactExcerpt)) throw new ApiError(422, "source_excerpt_not_found");
+  if (body.kind === "entity" && body.char_start != null && body.char_end != null && source.extracted_text.slice(body.char_start, body.char_end) !== body.context_excerpt) throw new ApiError(422, "source_offset_mismatch");
   const { kind, ...fields } = body;
   const { data, error } = await db.from(TABLES[kind])
     .insert({ ...fields, notebook_id: id, workspace_id: source.workspace_id, created_by: user.id })
