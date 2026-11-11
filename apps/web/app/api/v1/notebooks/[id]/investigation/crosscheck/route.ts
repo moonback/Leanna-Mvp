@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { ApiError, handle, requireRole, requireUser } from "@/lib/api";
 import { createServiceClient } from "@/lib/supabase/server";
@@ -17,11 +17,14 @@ export const POST = handle(async (_req: NextRequest, { params }: Params) => {
   if (notebookError) throw notebookError;
   if (!notebook) throw new ApiError(404, "not_found");
   const [entities, events, statements] = await Promise.all([
-    db.from("investigation_entities").select("source_id").eq("notebook_id", id).limit(500),
-    db.from("investigation_events").select("source_id").eq("notebook_id", id).limit(500),
-    db.from("investigation_statements").select("source_id").eq("notebook_id", id).limit(500),
+    db.from("investigation_entities").select("id, source_id, updated_at").eq("notebook_id", id).limit(500),
+    db.from("investigation_events").select("id, source_id, updated_at").eq("notebook_id", id).limit(500),
+    db.from("investigation_statements").select("id, source_id, updated_at").eq("notebook_id", id).limit(500),
   ]);
   for (const result of [entities,events,statements]) if (result.error) throw result.error;
+  const records = [
+    ...(entities.data ?? []), ...(events.data ?? []), ...(statements.data ?? []),
+  ];
   const sourceCount = new Set([
     ...(entities.data ?? []).map((x) => x.source_id),
     ...(events.data ?? []).map((x) => x.source_id),
