@@ -17,7 +17,7 @@ type Tab = "all" | "mine" | "shared";
 
 const fmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 const fold = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-const titleOf = (n: NotebookRow) => n.title || "Notebook sans titre";
+const titleOf = (n: NotebookRow) => n.title || "Dossier sans titre";
 const sources = (n: number) => `${n} source${n > 1 ? "s" : ""}`;
 
 export function Dashboard({ initial, loadError, initialView }: { initial: NotebookRow[]; loadError: boolean; initialView: "grid" | "list"; name: string | null }) {
@@ -70,15 +70,15 @@ export function Dashboard({ initial, loadError, initialView }: { initial: Notebo
   return (
     <>
     <AppHeader>
-      <SearchInput aria-label="Rechercher un notebook" placeholder="Rechercher" value={query} onChange={(e) => setQuery(e.target.value)} className="mx-auto w-full max-w-md" />
-      <Button size="sm" className="shrink-0" onClick={create} loading={creating}><Plus aria-hidden /> <span className="hidden sm:inline">Nouveau notebook</span><span className="sr-only sm:hidden">Nouveau notebook</span></Button>
+      <SearchInput aria-label="Rechercher un dossier d’enquête" placeholder="Rechercher un dossier" value={query} onChange={(e) => setQuery(e.target.value)} className="mx-auto w-full max-w-md" />
+      <Button size="sm" className="shrink-0" onClick={create} loading={creating}><Plus aria-hidden /> <span className="hidden sm:inline">Nouvelle enquête</span><span className="sr-only sm:hidden">Nouvelle enquête</span></Button>
     </AppHeader>
     <main className="mx-auto grid max-w-[var(--page-max-w)] gap-6 px-4 py-8 sm:px-6">
       {loadError && <Alert tone="danger" title="Impossible de charger vos notebooks" action={<Button size="sm" variant="secondary" onClick={() => router.refresh()}>Réessayer</Button>} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Tabs value={tab} onValueChange={(v) => { if (v === "discover") router.push("/discover"); else setTab(v as Tab); }}>
-          <TabsList aria-label="Filtrer les notebooks">
+          <TabsList aria-label="Filtrer les dossiers d’enquête">
             <TabsTrigger value="all">Tous</TabsTrigger>
             <TabsTrigger value="mine">Les miens</TabsTrigger>
             <TabsTrigger value="shared">Partagés avec moi</TabsTrigger>
@@ -95,8 +95,8 @@ export function Dashboard({ initial, loadError, initialView }: { initial: Notebo
 
       {items.length === 0 && !loadError ? (
         <Card>
-          <EmptyState icon={<BookOpen />} title="Créez votre premier notebook" action={<Button onClick={create} loading={creating}><Plus aria-hidden /> Nouveau notebook</Button>}>
-            Ajoutez-y des PDF, des pages web ou du texte : vous pourrez ensuite poser des questions et chaque réponse citera ses passages.
+          <EmptyState icon={<BookOpen />} title="Créez votre premier dossier d’enquête" action={<Button onClick={create} loading={creating}><Plus aria-hidden /> Nouvelle enquête</Button>}>
+            Centralisez les avis de recherche, rapports, témoignages et autres pièces. Leanna vous aidera à recouper les informations et à préparer des pistes vérifiables.
           </EmptyState>
         </Card>
       ) : visible.length === 0 ? (
@@ -121,7 +121,7 @@ export function Dashboard({ initial, loadError, initialView }: { initial: Notebo
       ) : (
         <Card className="overflow-hidden">
           <Table>
-            <caption className="sr-only">Notebooks</caption>
+            <caption className="sr-only">Dossiers d’enquête</caption>
             <thead><tr><Th>Titre</Th><Th className="hidden sm:table-cell">Sources</Th><Th className="hidden md:table-cell" aria-sort="none">Création</Th><Th className="hidden md:table-cell">Rôle</Th><Th><span className="sr-only">Actions</span></Th></tr></thead>
             <tbody>
               {visible.map((n) => (
@@ -168,7 +168,7 @@ function RenameDialog({ notebook, onClose, onDone }: { notebook: NotebookRow | n
   }
   return (
     <Dialog open={Boolean(notebook)} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent size="sm" title="Renommer le notebook">
+      <DialogContent size="sm" title="Renommer le dossier">
         <form onSubmit={save} className="grid gap-4">
           <Field id="rename" label="Titre" error={error}><Input autoFocus value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} /></Field>
           <div className="flex justify-end gap-2">
