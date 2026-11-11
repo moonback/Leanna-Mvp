@@ -6,25 +6,6 @@ alter table public.sources add constraint sources_id_notebook_unique unique (id,
 
 alter type public.job_kind add value if not exists 'investigation_extract';
 
-alter table public.investigation_entities
-  add column origin text not null default 'manual' check (origin in ('manual','ai_extracted')),
-  add column extraction_key text;
-alter table public.investigation_events
-  add column char_start integer check (char_start is null or char_start >= 0),
-  add column char_end integer check (char_end is null or char_end > char_start),
-  add column origin text not null default 'manual' check (origin in ('manual','ai_extracted')),
-  add column extraction_key text;
-alter table public.investigation_statements
-  add column char_start integer check (char_start is null or char_start >= 0),
-  add column char_end integer check (char_end is null or char_end > char_start),
-  add column origin text not null default 'manual' check (origin in ('manual','ai_extracted')),
-  add column extraction_key text;
-
-create unique index investigation_entities_extraction_uq on public.investigation_entities(extraction_key);
-create unique index investigation_events_extraction_uq on public.investigation_events(extraction_key) where extraction_key is not null;
-create unique index investigation_statements_extraction_uq on public.investigation_statements(extraction_key) where extraction_key is not null;
-
-
 create table public.investigation_entities (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
@@ -126,6 +107,24 @@ create table public.investigation_leads (
 );
 create index investigation_leads_nb_idx on public.investigation_leads(notebook_id, status, created_at desc);
 create index investigation_leads_source_idx on public.investigation_leads(source_id);
+
+alter table public.investigation_entities
+  add column origin text not null default 'manual' check (origin in ('manual','ai_extracted')),
+  add column extraction_key text;
+alter table public.investigation_events
+  add column char_start integer check (char_start is null or char_start >= 0),
+  add column char_end integer check (char_end is null or char_end > char_start),
+  add column origin text not null default 'manual' check (origin in ('manual','ai_extracted')),
+  add column extraction_key text;
+alter table public.investigation_statements
+  add column char_start integer check (char_start is null or char_start >= 0),
+  add column char_end integer check (char_end is null or char_end > char_start),
+  add column origin text not null default 'manual' check (origin in ('manual','ai_extracted')),
+  add column extraction_key text;
+
+create unique index investigation_entities_extraction_uq on public.investigation_entities(extraction_key);
+create unique index investigation_events_extraction_uq on public.investigation_events(extraction_key);
+create unique index investigation_statements_extraction_uq on public.investigation_statements(extraction_key);
 
 create trigger touch_updated_at before update on public.investigation_entities
   for each row execute function private.touch_updated_at();
