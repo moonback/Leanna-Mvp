@@ -10,6 +10,7 @@ import { Alert, Badge, EmptyState } from "@/components/ui/feedback";
 import { Card } from "@/components/ui/surfaces";
 import { toast } from "@/components/ui/toast";
 
+type SyncStatus = { enabled: boolean; last_success_at: string | null; last_status: string | null; items_seen: number; last_error: string | null } | null;
 type Discovery = { id: string; source_name: "116000" | "arpd"; source_url: string; source_item_id: string; title: string; excerpt: string | null; published_at: string | null; publication_status: string; first_seen_at: string; last_seen_at: string };
 type Notice = {
   id: string; source_id: string; source_name: "arpd" | "116000" | "interpol";
@@ -26,6 +27,7 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
   const [creatingDossierFor, setCreatingDossierFor] = React.useState<string | null>(null);
   const [notices, setNotices] = React.useState<Notice[]>([]);
   const [discoveries, setDiscoveries] = React.useState<Discovery[]>([]);
+  const [syncStatus, setSyncStatus] = React.useState<SyncStatus>(null);
   const [importingDiscovery, setImportingDiscovery] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
@@ -47,6 +49,7 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
       const json = await response.json();
       setNotices(json.notices ?? []);
       setDiscoveries(json.discoveries ?? []);
+      setSyncStatus(json.syncStatus ?? null);
     } catch { setError(true); }
     finally { setLoading(false); }
   }, [notebookId]);
@@ -122,7 +125,7 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
-          <Badge tone="success">Veille automatique activée : 116 000</Badge>
+          <Badge tone="success">Veille automatique configurée : 116 000</Badge>
           <Badge>ARPD et INTERPOL : consultation / import manuel</Badge>
         </div>
         {canEdit && <Button onClick={() => setFormOpen((v) => !v)}><Plus aria-hidden /> Ajouter un avis</Button>}
@@ -159,9 +162,10 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
       )}
       <section className="grid gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div><h2 className="font-semibold">Nouvelles publications détectées</h2><p className="text-sm text-text-muted">Flux public 116 000 vérifié automatiquement toutes les 15 minutes. Chaque publication reste à examiner avant d'être ajoutée à une enquête.</p></div>
+          <div><h2 className="font-semibold">Nouvelles publications détectées</h2><p className="text-sm text-text-muted">Le worker interroge le flux public toutes les 15 minutes quand il tourne. Chaque publication reste à examiner avant son ajout à une enquête.</p></div>
           <Badge>{discoveries.length} à examiner</Badge>
         </div>
+        <p className="text-xs text-text-muted">{syncStatus?.last_success_at ? "Dernière synchronisation : " + new Date(syncStatus.last_success_at).toLocaleString("fr-FR") : "En attente de la première synchronisation du worker."}{syncStatus?.last_error ? " · La dernière synchronisation a rencontré une erreur." : ""}</p>
         {discoveries.length === 0 ? <p className="text-sm text-text-muted">Aucune nouvelle publication détectée pour le moment.</p> : discoveries.map((item) => (
           <Card key={item.id} className="grid gap-2 p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
