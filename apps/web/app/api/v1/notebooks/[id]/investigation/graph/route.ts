@@ -20,11 +20,12 @@ export const GET = handle(async (_req: NextRequest, { params }: Params) => {
   await requireRole(id, "viewer");
   const db = await createUserClient();
   const [
-    clusters, mentions, relations, relationEvidence, sourceLineage,
+    clusters, mentions, entityRecords, relations, relationEvidence, sourceLineage,
     contradictions, contradictionEvidence, events,
   ] = await Promise.all([
     db.from("investigation_entity_clusters").select("*").eq("notebook_id", id).order("canonical_label"),
     db.from("investigation_entity_mentions").select("*").eq("notebook_id", id).order("created_at"),
+    db.from("investigation_entities").select("id, source_id, entity_type, label, context_excerpt, page_number, char_start, char_end, verification_status, origin").eq("notebook_id", id).order("created_at"),
     db.from("investigation_relations").select("*").eq("notebook_id", id).order("created_at", { ascending: false }),
     db.from("investigation_relation_evidence").select("*").eq("notebook_id", id).order("created_at"),
     db.from("investigation_source_lineage").select("*").eq("notebook_id", id).order("created_at"),
@@ -32,12 +33,13 @@ export const GET = handle(async (_req: NextRequest, { params }: Params) => {
     db.from("investigation_contradiction_evidence").select("*").eq("notebook_id", id).order("created_at"),
     db.from("investigation_events").select("id, source_id, title, description, original_date_text, occurred_at_start, occurred_at_end, date_precision, context_excerpt, page_number, char_start, char_end, verification_status, created_at").eq("notebook_id", id).order("occurred_at_start", { ascending: true, nullsFirst: false }),
   ]);
-  for (const result of [clusters, mentions, relations, relationEvidence, sourceLineage, contradictions, contradictionEvidence, events]) {
+  for (const result of [clusters, mentions, entityRecords, relations, relationEvidence, sourceLineage, contradictions, contradictionEvidence, events]) {
     if (result.error) throw result.error;
   }
   return NextResponse.json({
     clusters: clusters.data ?? [],
     mentions: mentions.data ?? [],
+    entityRecords: entityRecords.data ?? [],
     relations: relations.data ?? [],
     relationEvidence: relationEvidence.data ?? [],
     sourceLineage: sourceLineage.data ?? [],
