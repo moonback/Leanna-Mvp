@@ -22,7 +22,7 @@ Leanna Notebook est une application SaaS multi-utilisateur fondée sur Next.js, 
 | Google Drive | Type de source prévu dans le modèle de données | Connecteur de bout en bout non confirmé |
 | Présentations | Type `slide_deck` présent dans l'enum SQL | Non accepté par le schéma de création Studio inspecté |
 
-Le statut « repéré dans le code » ne signifie pas qu'une fonctionnalité a été testée en production. Voir le [rapport d'audit](docs/DOCUMENTATION_AUDIT.md).
+Le statut « repéré dans le code » ne signifie pas qu'une fonctionnalité a été testée en production. Voir l'[index documentaire](docs/README.md).
 
 ## Principes de traitement des informations d’enquête
 
@@ -57,7 +57,7 @@ flowchart LR
   DESK[apps/desktop - Electron] --> WEB
 ```
 
-Le worker consomme les jobs persistés en base. Le système décrit dans le code utilise des jobs, quotas et états de progression. Voir [Architecture](docs/ARCHITECTURE.md).
+Le worker consomme les jobs persistés en base. Le système décrit dans le code utilise des jobs, quotas et états de progression. Voir l'[index documentaire](docs/README.md) et le [guide Investigation Graph](docs/INVESTIGATION_GRAPH.md).
 
 ## Démarrage local
 
@@ -69,13 +69,13 @@ Le worker consomme les jobs persistés en base. Le système décrit dans le code
 
 ### Installation
 ```bash
-git clone https://github.com/moonback/leanna-notebook.git
-cd leanna-notebook
+git clone https://github.com/moonback/Leanna-Mvp.git
+cd Leanna-Mvp
 pnpm install
 pnpm db:start
 ```
 
-Configurez les variables web et worker. Le README précédent référençait `apps/web/.env.example`, dont l'existence n'a pas été confirmée lors de l'audit distant. L'exemple worker accessible est `apps/worker/.env.example`.
+Configurez les variables web et worker. Le dépôt fournit `apps/worker/.env.example` ; aucun fichier `apps/web/.env.example` n'est présent dans l'arborescence actuelle. Consultez les manifestes et la documentation avant de créer votre fichier `.env.local`.
 
 ### Lancement
 Terminal 1 :
@@ -92,7 +92,7 @@ Web : http://localhost:3000. Supabase local : API 58321, PostgreSQL 58322, Studi
 
 Pour réinitialiser la base locale (opération destructive) : `pnpm db:reset`.
 
-Voir [Installation](docs/INSTALLATION.md) et [Configuration](docs/CONFIGURATION.md).
+Voir l'[index documentaire](docs/README.md) et le guide [Investigation Graph](docs/INVESTIGATION_GRAPH.md).
 
 ## Variables d'environnement
 
@@ -111,7 +111,7 @@ Les variables principales sont :
 | `APP_URL`, `BILLING_MODE` | URL publique et mode de facturation |
 | `NEXT_PUBLIC_LEGAL_ENTITY`, `NEXT_PUBLIC_LEGAL_EMAIL` | Informations des pages légales |
 
-La liste complète et les variables worker sont détaillées dans [Configuration](docs/CONFIGURATION.md). Ne versionnez jamais de secrets. Web et worker doivent utiliser des embeddings compatibles de même dimension (1024 selon la configuration décrite).
+La configuration est documentée dans [l'index documentaire](docs/README.md) et dans l'exemple `apps/worker/.env.example`. Ne versionnez jamais de secrets. Web et worker doivent utiliser des embeddings compatibles de même dimension (1024 selon la configuration décrite).
 
 ## Scripts
 
@@ -133,30 +133,25 @@ Ces commandes proviennent des manifestes du dépôt ; elles n'ont pas été exé
 
 L'index de référence est [docs/README.md](docs/README.md).
 
-Documents importants :
+Documents disponibles :
 - [Vision produit — enquêtes sur personnes disparues](docs/PRODUCT_VISION.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Référence API](docs/API_REFERENCE.md)
-- [Base de données](docs/DATABASE.md)
-- [Catalogue des prompts IA](docs/AI_PROMPTS_CATALOG.md)
-- [Gestion des prompts](docs/features/SYSTEM_PROMPTS.md)
-- [Mode vocal](docs/features/VOICE_MODE.md)
-- [Studio](docs/features/STUDIO.md)
-- [Guide utilisateur](docs/user-guide/GETTING_STARTED.md)
-- [Audit documentaire](docs/DOCUMENTATION_AUDIT.md)
+- [Investigation Graph — graphe, provenance et chronologie](docs/INVESTIGATION_GRAPH.md)
+- [Architecture de génération d'images](docs/architecture/IMAGE_GENERATION_ARCHITECTURE.md)
+- [Audit de génération d'images](docs/audits/IMAGE_GENERATION_AUDIT.md)
+- [OpenRouter et Nano Banana](docs/technical/OPENROUTER_NANO_BANANA.md)
 
 ## État de la réorientation produit
 
-Cette branche ajoute les fondations métier du dossier d’enquête : entités mentionnées, événements, déclarations et pistes persistées, chacune rattachée à ses sources et extraits. Le panneau permet la saisie, la revue humaine, l’extraction IA par lots et le recoupement multi-sources qui propose des pistes sans les valider. Les extraits IA ne sont enregistrés que s’ils correspondent exactement au texte source ; les traitements sont idempotents et journalisés. La résolution des homonymes, les relations permanentes entre entités et les chronologies avancées restent à développer.
+La version actuelle fournit le dossier d’enquête, l’extraction sourcée, le recoupement multi-sources et un premier graphe de relations documentaires. Le graphe sépare mentions et nœuds canoniques, conserve les citations et la filiation documentaire, expose les contradictions et rassemble les événements dans une chronologie. Les rapprochements et relations restent soumis à validation humaine ; les hypothèses ne sont jamais présentées comme des faits.
 
 ## Contribution
 
 1. Créer une branche dédiée depuis `main` (par exemple `feat/...`, `fix/...` ou `docs/...`).
 2. Garder les changements ciblés et ajouter/adapter les tests pertinents.
 3. Exécuter `pnpm typecheck`, `pnpm lint`, `pnpm test` et, pour les changements SQL, `pnpm db:test`.
-4. Ouvrir une Pull Request vers `main avec le périmètre, les tests exécutés et les limites connues.
+4. Ouvrir une Pull Request vers `main` avec le périmètre, les tests exécutés et les limites connues.
 
-La structure est organisée autour de `apps/web`, `apps/worker`, `apps/desktop`, `packages/core` et `supabase`. Voir [Structure du projet](docs/PROJECT_STRUCTURE.md).
+La structure est organisée autour de `apps/web`, `apps/worker`, `apps/desktop`, `packages/core` et `supabase`. Voir [l'index documentaire](docs/README.md).
 
 ## Licence
 
@@ -164,4 +159,4 @@ Aucun fichier `LICENSE` n'a été trouvé à la racine via l'API GitHub lors de 
 
 ---
 
-**État documentaire :** la documentation décrit désormais plusieurs fonctionnalités confirmées dans le code, mais les validations locales et l'audit exhaustif des handlers restent à faire. Consulter [docs/DOCUMENTATION_AUDIT.md](docs/DOCUMENTATION_AUDIT.md).
+**État documentaire :** les guides sont indexés dans [docs/README.md](docs/README.md). Les tests, migrations et parcours déployés doivent être validés séparément avant mise en production.
