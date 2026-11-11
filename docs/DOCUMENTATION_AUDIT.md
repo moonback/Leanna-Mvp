@@ -32,7 +32,7 @@ L'audit a vérifié l'arborescence Git, le README racine, les manifestes pnpm, l
 
 ## Vérifications à effectuer
 
-Le workflow CI ajouté doit fournir les premiers résultats automatiques. À ce stade, aucun résultat de typecheck, lint, tests Vitest, build desktop, migration ou pgTAP n'est revendiqué dans cet audit. Vérifier les logs GitHub Actions après le premier push de cette branche.
+Le premier run CI a bien été créé après le push de cette branche, mais les deux jobs se sont terminés en échec avant d'exposer la moindre étape (`steps: []`). Les logs de jobs ne sont pas disponibles via l'API consultée. Cela ne prouve ni un échec du code ni une réussite des vérifications : aucun résultat de typecheck, lint, tests Vitest, build desktop, migration ou pgTAP n'est revendiqué. Il faut rétablir l'exécution des runners GitHub Actions puis examiner les résultats réels.
 
 ## Principes de sécurité
 
