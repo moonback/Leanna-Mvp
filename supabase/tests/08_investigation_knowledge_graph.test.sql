@@ -1,7 +1,7 @@
 -- Graphe d'enquête : isolation, provenance, relations, contradictions et filiation acyclique.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(9);
+select plan(11);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000001a', 'graph-owner@test.local'),
@@ -99,6 +99,30 @@ from graph_ctx
 join public.investigation_relations r on r.notebook_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 join public.investigation_statements s on s.notebook_id = r.notebook_id
 where s.source_id = (select id from graph_src_a);
+
+select throws_ok(
+  $ insert into public.investigation_relation_evidence
+       (workspace_id, notebook_id, relation_id, source_id, evidence_role, quote, quote_hash, statement_id)
+     select ws, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', r.id, (select id from graph_src_b),
+       'support', 'Un second témoin indique : la personne était au lieu B.',
+       encode(sha256(convert_to('Un second témoin indique : la personne était au lieu B.', 'UTF8')), 'hex'),
+       s.id
+     from graph_ctx
+     join public.investigation_relations r on r.notebook_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+     join public.investigation_statements s on s.notebook_id = r.notebook_id
+     where s.source_id = (select id from graph_src_a) $,
+  '23514', 'evidence_source_mismatch', 'une preuve ne peut pas citer une déclaration issue d une autre source'
+);
+select throws_ok(
+  $ insert into public.investigation_relation_evidence
+       (workspace_id, notebook_id, relation_id, source_id, evidence_role, quote, quote_hash)
+     select ws, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', r.id, (select id from graph_src_a),
+       'support', 'Citation absente de la pièce.',
+       encode(sha256(convert_to('Citation absente de la pièce.', 'UTF8')), 'hex')
+     from graph_ctx
+     join public.investigation_relations r on r.notebook_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' $,
+  '23514', 'evidence_quote_not_found', 'une citation absente du texte source est refusée'
+);
 
 insert into public.investigation_source_lineage
   (workspace_id, notebook_id, parent_source_id, child_source_id, lineage_type, created_by)
