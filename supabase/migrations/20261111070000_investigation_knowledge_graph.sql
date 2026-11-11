@@ -178,7 +178,14 @@ create table public.investigation_contradiction_evidence (
 create index investigation_contradiction_evidence_idx
   on public.investigation_contradiction_evidence(notebook_id, contradiction_id);
 
-do $$
+create trigger touch_updated_at before update on public.investigation_entity_clusters
+  for each row execute function private.touch_updated_at();
+create trigger touch_updated_at before update on public.investigation_relations
+  for each row execute function private.touch_updated_at();
+create trigger touch_updated_at before update on public.investigation_contradictions
+  for each row execute function private.touch_updated_at();
+
+do $
 declare
   t text;
 begin
@@ -187,7 +194,6 @@ begin
     'investigation_relations','investigation_relation_evidence','investigation_contradictions',
     'investigation_contradiction_evidence'
   ] loop
-    execute format('create trigger touch_updated_at before update on public.%I for each row execute function private.touch_updated_at()', t);
     execute format('alter table public.%I enable row level security', t);
     execute format(
       'create policy %I on public.%I for select to authenticated using (private.notebook_role(notebook_id) >= ''viewer'')',
@@ -197,4 +203,4 @@ begin
     execute format('grant select on public.%I to authenticated', t);
     execute format('grant all on public.%I to service_role', t);
   end loop;
-end $$;
+end $;
