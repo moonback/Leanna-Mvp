@@ -12,7 +12,7 @@ function clean(value: string | null | undefined, max: number): string {
   return (value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 }
 
-function parseFeed(xml: string): FeedItem[] {
+export function parseFeed(xml: string): FeedItem[] {
   const { document } = parseHTML(xml);
   const nodes = [...document.querySelectorAll("item"), ...document.querySelectorAll("entry")];
   const items: FeedItem[] = [];
@@ -27,7 +27,9 @@ function parseFeed(xml: string): FeedItem[] {
     const excerpt = clean(node.querySelector("description")?.textContent || node.querySelector("summary")?.textContent || node.querySelector("content")?.textContent, 3000) || null;
     const rawDate = node.querySelector("pubDate")?.textContent || node.querySelector("published")?.textContent || node.querySelector("updated")?.textContent;
     const parsedDate = rawDate ? new Date(rawDate) : null;
-    items.push({ id, url: url.toString(), title: title || "Publication sans titre", excerpt, publishedAt: parsedDate && Number.isFinite(parsedDate.getTime()) ? parsedDate.toISOString() : null });
+    const safeTitle = title || "Publication sans titre";
+    if (!/(avis de recherche|personne disparue|enfant disparu|enfant disparue|disparition)/i.test(safeTitle + " " + (excerpt ?? ""))) continue;
+    items.push({ id, url: url.toString(), title: safeTitle, excerpt, publishedAt: parsedDate && Number.isFinite(parsedDate.getTime()) ? parsedDate.toISOString() : null });
   }
   return items;
 }
