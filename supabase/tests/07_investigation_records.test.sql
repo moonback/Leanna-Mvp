@@ -1,7 +1,7 @@
 -- Modèle métier d'enquête : provenance, isolation RLS et revue sous contrôle serveur.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(10);
+select plan(12);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'inv-a@test.local'),
@@ -79,8 +79,21 @@ select is(
   0, 'la même version de source ne crée pas un second job'
 );
 select is(
-  (select count(*)::int from public.usage_ledger where feature = 'investigation_extract' and status = 'reserved'),
-  1, 'un seul crédit est réservé pour une analyse idempotente'
+  (select id from (select public.queue_investigation_crosscheck_job(
+    '22222222-2222-2222-2222-222222222222',
+    '00000000-0000-0000-0000-00000000000a',
+    'investigation-crosscheck:test-fingerprint'
+  ) as id) first_job),
+  public.queue_investigation_crosscheck_job(
+    '22222222-2222-2222-2222-222222222222',
+    '00000000-0000-0000-0000-00000000000a',
+    'investigation-crosscheck:test-fingerprint'
+  ),
+  'une nouvelle requête identique retourne le même job de recoupement'
+);
+select is(
+  (select count(*)::int from public.usage_ledger where feature = 'investigation_crosscheck' and status = 'reserved'),
+  1, 'un seul coût de recoupement est réservé pour la même version'
 );
 reset role;
 
