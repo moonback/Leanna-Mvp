@@ -68,6 +68,10 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
     .eq("id", body.entity_id).eq("notebook_id", id).maybeSingle();
   if (mentionError) throw mentionError;
   if (!mention) throw new ApiError(404, "entity_mention_not_found");
+  const { data: previousLink, error: previousLinkError } = await db.from("investigation_entity_mentions")
+    .select("id, match_status").eq("entity_id", mention.id).eq("notebook_id", id).maybeSingle();
+  if (previousLinkError) throw previousLinkError;
+  if (previousLink && previousLink.match_status !== "rejected") throw new ApiError(409, "entity_already_linked");
 
   let cluster: { id: string; workspace_id: string; notebook_id: string; entity_type: string; canonical_label: string; status: string };
   if (body.cluster_id) {
@@ -91,7 +95,7 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
     cluster = createdCluster;
   }
 
-  const { data: link, error: linkError } = await db.from("investigation_entity_mentions").insert({
+  const linkPayload = {
     workspace_id: mention.workspace_id,
     notebook_id: id,
     entity_id: mention.id,
@@ -99,7 +103,13 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
     match_status: "candidate",
     match_rationale: body.match_rationale ?? null,
     created_by: user.id,
-  }).select("*").single();
+    reviewed_by: null,
+    reviewed_at: null,
+  };
+  const linkQuery = previousLink
+    ? db.from("investigation_entity_mentions").update(linkPayload).eq("id", previousLink.id).eq("notebook_id", id)
+    : db.from("investigation_entity_mentions").insert(linkPayload);
+  const { data: link, error: linkError } = await linkQuery.select("*").single();
   if (linkError) {
     if (!body.cluster_id) await db.from("investigation_entity_clusters").delete().eq("id", cluster.id).eq("notebook_id", id);
     if (linkError.code === "23505") throw new ApiError(409, "entity_already_linked");
@@ -109,7 +119,7 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
   const { error: auditError } = await db.from("audit_log").insert({
     workspace_id: mention.workspace_id,
     actor_id: user.id,
-    action: body.cluster_id ? "investigation.graph.entity_mention.link" : "investigation.graph.entity_candidate.create",
+    action: previousLink ? "investigation.graph.entity_mention.reassign" : body.cluster_id ? "investigation.graph.entity_mention.link" : "investigation.graph.entity_candidate.create",
     target_type: "investigation_entity_cluster",
     target_id: cluster.id,
     meta: { notebook_id: id, entity_id: mention.id, cluster_id: cluster.id, match_status: "candidate" },
