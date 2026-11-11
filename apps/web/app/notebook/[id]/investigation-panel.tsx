@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, Check, Clock3, FileText, Plus, RefreshCw, X } from "lucide-react";
+import { AlertTriangle, Check, FileText, Plus, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, EmptyState } from "@/components/ui/feedback";
 import { Field, Input, Textarea } from "@/components/ui/field";
@@ -173,7 +173,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
               <article key={r.id} className="rounded-lg border border-border p-3">
                 <div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="text-sm font-medium">{r.title}</p><p className="mt-0.5 text-xs text-text-muted">{r.subtitle}</p></div>{status(r.status)}</div>
                 {excerpt(r.excerpt)}
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">{sourceRef(r.source_id,r.page)}{canEdit && r.status !== "verified" && r.status !== "rejected" && <span className="flex gap-1"><Button size="xs" variant="secondary" onClick={()=>void review(r.kind,r.id,"verified")}><Check aria-hidden /> Valider</Button><Button size="xs" variant="ghost" onClick={()=>void review(r.kind,r.id,"rejected")}><X aria-hidden /> Rejeter</Button></span>}</div>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">{sourceRef(r.source_id,r.page)}{canEdit && r.status !== "verified" && r.status !== "rejected" && <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={()=>void review(r.kind,r.id,"verified")}><Check aria-hidden /> Valider</Button><Button size="sm" variant="ghost" onClick={()=>void review(r.kind,r.id,"rejected")}><X aria-hidden /> Rejeter</Button></span>}</div>
               </article>
             ))}
           </section>
@@ -186,7 +186,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
                 {excerpt(lead.supporting_excerpt)}
                 {lead.counter_evidence && <p className="mt-2 text-xs text-text-muted">Limites / éléments contraires : {lead.counter_evidence}</p>}
                 <p className="mt-2 text-xs text-text-muted">Solidité documentaire : {lead.confidence === "high" ? "élevée" : lead.confidence === "moderate" ? "modérée" : "faible"}. Vérification proposée : {lead.next_check}</p>
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">{sourceRef(lead.source_id,lead.page_number)}{canEdit && lead.status !== "validated" && lead.status !== "rejected" && <span className="flex gap-1"><Button size="xs" variant="secondary" onClick={()=>void review("lead",lead.id,"validated")}><Check aria-hidden /> Valider</Button><Button size="xs" variant="ghost" onClick={()=>void review("lead",lead.id,"rejected")}><X aria-hidden /> Rejeter</Button></span>}</div>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">{sourceRef(lead.source_id,lead.page_number)}{canEdit && lead.status !== "validated" && lead.status !== "rejected" && <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={()=>void review("lead",lead.id,"validated")}><Check aria-hidden /> Valider</Button><Button size="sm" variant="ghost" onClick={()=>void review("lead",lead.id,"rejected")}><X aria-hidden /> Rejeter</Button></span>}</div>
               </article>
             ))}
           </section>
