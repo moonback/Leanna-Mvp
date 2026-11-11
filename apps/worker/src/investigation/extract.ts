@@ -38,7 +38,7 @@ function key(parts: string[]): string {
   return createHash("sha256").update(parts.join("\u001f")).digest("hex");
 }
 
-function exactOffset(content: string, quote: string): number {
+export function exactQuoteOffset(content: string, quote: string): number {
   return content.indexOf(quote);
 }
 
@@ -84,7 +84,7 @@ export function investigationExtractHandler(db: SupabaseClient, llm: Llm): Handl
       const result = parseExtraction(response.text);
 
       for (const item of result.entities) {
-        const local = exactOffset(chunk.content, item.quote);
+        const local = exactQuoteOffset(chunk.content, item.quote);
         if (local < 0 || !item.quote.includes(item.label)) continue;
         entityRows.push({
           workspace_id: source.workspace_id, notebook_id: source.notebook_id, source_id: source.id,
@@ -95,7 +95,7 @@ export function investigationExtractHandler(db: SupabaseClient, llm: Llm): Handl
         });
       }
       for (const item of result.events) {
-        const local = exactOffset(chunk.content, item.quote);
+        const local = exactQuoteOffset(chunk.content, item.quote);
         if (local < 0 || !item.quote.includes(item.original_date_text)) continue;
         eventRows.push({
           workspace_id: source.workspace_id, notebook_id: source.notebook_id, source_id: source.id,
@@ -106,7 +106,7 @@ export function investigationExtractHandler(db: SupabaseClient, llm: Llm): Handl
         });
       }
       for (const item of result.statements) {
-        const local = exactOffset(chunk.content, item.quote);
+        const local = exactQuoteOffset(chunk.content, item.quote);
         if (local < 0 || !item.quote.includes(item.content)) continue;
         statementRows.push({
           workspace_id: source.workspace_id, notebook_id: source.notebook_id, source_id: source.id,
