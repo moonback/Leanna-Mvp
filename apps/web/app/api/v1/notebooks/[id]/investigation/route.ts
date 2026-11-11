@@ -97,6 +97,16 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
     .insert({ ...fields, notebook_id: id, workspace_id: source.workspace_id, created_by: user.id })
     .select("*").single();
   if (error) throw error;
+  if (kind === "lead") {
+    const quote = body.supporting_excerpt;
+    const charStart = source.extracted_text.indexOf(quote);
+    const { error: evidenceError } = await db.from("investigation_lead_evidence").insert({
+      workspace_id: source.workspace_id, notebook_id: id, lead_id: data.id, source_id: source.id,
+      evidence_role: "support", quote, page_number: body.page_number ?? null,
+      char_start: charStart >= 0 ? charStart : null, char_end: charStart >= 0 ? charStart + quote.length : null,
+    });
+    if (evidenceError) { await db.from("investigation_leads").delete().eq("id", data.id); throw evidenceError; }
+  }
   await db.from("audit_log").insert({
     workspace_id: source.workspace_id, actor_id: user.id,
     action: `investigation.${kind}.create`, target_type: `investigation_${kind}`, target_id: data.id,
