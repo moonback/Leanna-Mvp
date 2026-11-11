@@ -26,6 +26,7 @@ create table public.missing_person_notices (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (source_id),
+  unique (id, notebook_id),
   foreign key (workspace_id, notebook_id) references public.notebooks(workspace_id, id) on delete cascade,
   foreign key (source_id, notebook_id) references public.sources(id, notebook_id) on delete cascade
 );
@@ -44,7 +45,7 @@ create table public.missing_person_notice_revisions (
   captured_at timestamptz not null default now(),
   captured_by uuid references auth.users(id) on delete set null,
   foreign key (workspace_id, notebook_id) references public.notebooks(workspace_id, id) on delete cascade,
-  foreign key (notice_id) references public.missing_person_notices(id) on delete cascade
+  foreign key (notice_id, notebook_id) references public.missing_person_notices(id, notebook_id) on delete cascade
 );
 create index missing_person_notice_revisions_notice_idx
   on public.missing_person_notice_revisions(notice_id, captured_at desc);
