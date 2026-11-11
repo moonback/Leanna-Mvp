@@ -46,17 +46,29 @@ export function investigationCrosscheckHandler(db: SupabaseClient, llm: Llm): Ha
   return async (job, ctx) => {
     if (!job.notebook_id) throw new PermanentError("crosscheck_job_invalid");
     const [entities, events, statements] = await Promise.all([
-      db.from("investigation_entities").select("id, source_id, label, entity_type, context_excerpt, page_number, char_start, verification_status, created_at").eq("notebook_id", job.notebook_id).order("created_at", { ascending: false }).limit(60),
-      db.from("investigation_events").select("id, source_id, title, description, original_date_text, context_excerpt, page_number, char_start, verification_status, created_at").eq("notebook_id", job.notebook_id).order("created_at", { ascending: false }).limit(60),
-      db.from("investigation_statements").select("id, source_id, content, statement_type, speaker_label, context_excerpt, page_number, char_start, verification_status, created_at").eq("notebook_id", job.notebook_id).order("created_at", { ascending: false }).limit(60),
+      db.from("investigation_entities").select("id, source_id, label, entity_type, context_excerpt, page_number, char_start, verification_status, created_at").eq("notebook_id", job.notebook_id).order("created_at", { ascending: false }).limit(500),
+      db.from("investigation_events").select("id, source_id, title, description, original_date_text, context_excerpt, page_number, char_start, verification_status, created_at").eq("notebook_id", job.notebook_id).order("created_at", { ascending: false }).limit(500),
+      db.from("investigation_statements").select("id, source_id, content, statement_type, speaker_label, context_excerpt, page_number, char_start, verification_status, created_at").eq("notebook_id", job.notebook_id).order("created_at", { ascending: false }).limit(500),
     ]);
     for (const result of [entities,events,statements]) if (result.error) throw result.error;
-    const records: EvidenceRecord[] = [
+    const allRecords: EvidenceRecord[] = [
       ...(entities.data ?? []).map((row) => ({ id:row.id, source_id:row.source_id, kind:"entity" as const, label:row.label, detail:row.entity_type, quote:row.context_excerpt, page_number:row.page_number, char_start:row.char_start, verification_status:row.verification_status, created_at:row.created_at })),
       ...(events.data ?? []).map((row) => ({ id:row.id, source_id:row.source_id, kind:"event" as const, label:row.title, detail:`${row.original_date_text} — ${row.description}`, quote:row.context_excerpt, page_number:row.page_number, char_start:row.char_start, verification_status:row.verification_status, created_at:row.created_at })),
       ...(statements.data ?? []).map((row) => ({ id:row.id, source_id:row.source_id, kind:"statement" as const, label:row.content, detail:`${row.statement_type}${row.speaker_label ? ` · ${row.speaker_label}` : ""}`, quote:row.context_excerpt, page_number:row.page_number, char_start:row.char_start, verification_status:row.verification_status, created_at:row.created_at })),
-    ].slice(0, 180);
-    const sourceCount = new Set(records.map((record) => record.source_id)).size;
+    ];
+    const grouped = new Map<string, EvidenceRecord[]>();
+    for (const record of allRecords.sort((a,b) => b.created_at.localeCompare(a.created_at))) {
+      const group = grouped.get(record.source_id) ?? [];
+      group.push(record);
+      grouped.set(record.source_id, group);
+    }
+    const sourceCount = grouped.size;
+    const records: EvidenceRecord[] = [];
+    for (let round = 0; round < 12 && records.length < 120; round++) {
+      for (const group of grouped.values()) {
+        if (group[round] && records.length < 120) records.push(group[round]);
+      }
+    }
     if (sourceCount < 2 || records.length < 2) return { leads_created: 0, reason: "insufficient_sources", source_count: sourceCount };
     if (await ctx.cancelled()) return { cancelled: true };
 
