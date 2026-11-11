@@ -35,7 +35,7 @@ export function parseFeed(xml: string): FeedItem[] {
 }
 
 /**
- * Polls the official 116000 WordPress RSS feed. Only public feed metadata is stored:
+ * Polls the public default WordPress RSS endpoint on the 116000 website. Only public feed metadata is stored:
  * no image download, no crawling of private pages, no inference that a missing RSS item is resolved.
  */
 export async function syncMissingPersonNoticeFeed(db: SupabaseClient): Promise<number> {
