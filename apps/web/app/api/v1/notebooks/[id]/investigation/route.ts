@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import { ApiError, handle, parseBody, requireRole, requireUser } from "@/lib/api";
 import { createServiceClient, createUserClient } from "@/lib/supabase/server";
@@ -102,7 +103,7 @@ export const POST = handle(async (req: NextRequest, { params }: Params) => {
     const charStart = source.extracted_text.indexOf(quote);
     const { error: evidenceError } = await db.from("investigation_lead_evidence").insert({
       workspace_id: source.workspace_id, notebook_id: id, lead_id: data.id, source_id: source.id,
-      evidence_role: "support", quote, page_number: body.page_number ?? null,
+      evidence_role: "support", quote, quote_hash: createHash("sha256").update(quote).digest("hex"), page_number: body.page_number ?? null,
       char_start: charStart >= 0 ? charStart : null, char_end: charStart >= 0 ? charStart + quote.length : null,
     });
     if (evidenceError) { await db.from("investigation_leads").delete().eq("id", data.id); throw evidenceError; }
