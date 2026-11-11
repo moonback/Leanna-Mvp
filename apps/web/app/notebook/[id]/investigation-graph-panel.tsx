@@ -48,6 +48,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
   const [subjectId, setSubjectId] = React.useState("");
   const [objectId, setObjectId] = React.useState("");
   const [sourceId, setSourceId] = React.useState("");
+  const [relationEventId, setRelationEventId] = React.useState("");
   const [relationType, setRelationType] = React.useState("seen_at");
   const [quote, setQuote] = React.useState("");
   const [lineageParent, setLineageParent] = React.useState("");
@@ -105,7 +106,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
     try {
       const response = await fetch(`/api/v1/notebooks/${notebookId}/investigation/graph/relations`, {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ subject_cluster_id: subjectId, object_cluster_id: objectId, relation_type: relationType, source_id: sourceId, quote }),
+        body: JSON.stringify({ subject_cluster_id: subjectId, object_cluster_id: objectId, relation_type: relationType, source_id: sourceId, event_id: relationEventId || undefined, quote }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? "relation_create_failed");
@@ -325,10 +326,13 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
                       <select required value={relationType} onChange={(event) => setRelationType(event.target.value)} className="h-10 rounded-md border border-border bg-surface px-3 text-sm">
                         {Object.entries(relationLabels).map(([key,label]) => <option key={key} value={key}>{label}</option>)}
                       </select>
-                      <select required value={sourceId} onChange={(event) => setSourceId(event.target.value)} className="h-10 rounded-md border border-border bg-surface px-3 text-sm">
+                      <select required value={sourceId} onChange={(event) => { setSourceId(event.target.value); setRelationEventId(""); }} className="h-10 rounded-md border border-border bg-surface px-3 text-sm">
                         <option value="">Document source</option>{sources.filter((source) => source.status === "ready").map((source) => <option key={source.id} value={source.id}>{source.title}</option>)}
                       </select>
                     </div>
+                    {sourceId && data.events.some((item) => item.source_id === sourceId) && <select value={relationEventId} onChange={(event) => { const selected = data.events.find((item) => item.id === event.target.value); setRelationEventId(event.target.value); if (selected) setQuote(selected.context_excerpt); }} className="h-10 rounded-md border border-border bg-surface px-3 text-sm">
+                      <option value="">Relier à un événement (facultatif)</option>{data.events.filter((item) => item.source_id === sourceId).map((item) => <option key={item.id} value={item.id}>{item.title} · {item.original_date_text}</option>)}
+                    </select>}
                     <textarea required minLength={1} maxLength={4000} value={quote} onChange={(event) => setQuote(event.target.value)} placeholder="Citation exacte du document qui soutient ou nuance la relation…" className="min-h-20 rounded-md border border-border bg-surface px-3 py-2 text-sm" />
                     <Button type="submit" size="sm" disabled={creatingRelation || !subjectId || !objectId || subjectId === objectId || !sourceId || !quote.trim()}>{creatingRelation ? "Enregistrement…" : "Proposer la relation"}</Button>
                   </form>
