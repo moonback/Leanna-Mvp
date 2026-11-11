@@ -133,17 +133,17 @@ Ces commandes proviennent des manifestes du dépôt ; elles n'ont pas été exé
 
 L'index de référence est [docs/README.md](docs/README.md).
 
-Documents importants :
+Documents disponibles :
 - [Vision produit — enquêtes sur personnes disparues](docs/PRODUCT_VISION.md)
 - [Architecture](docs/ARCHITECTURE.md)
-- [Référence API](docs/API_REFERENCE.md)
-- [Base de données](docs/DATABASE.md)
-- [Catalogue des prompts IA](docs/AI_PROMPTS_CATALOG.md)
-- [Gestion des prompts](docs/features/SYSTEM_PROMPTS.md)
-- [Mode vocal](docs/features/VOICE_MODE.md)
-- [Studio](docs/features/STUDIO.md)
-- [Guide utilisateur](docs/user-guide/GETTING_STARTED.md)
+- [Installation locale](docs/INSTALLATION.md)
+- [Configuration](docs/CONFIGURATION.md)
+- [Structure du dépôt](docs/PROJECT_STRUCTURE.md)
 - [Audit documentaire](docs/DOCUMENTATION_AUDIT.md)
+- [Architecture de génération d'images](docs/architecture/IMAGE_GENERATION_ARCHITECTURE.md)
+- [Audit de génération d'images](docs/audits/IMAGE_GENERATION_AUDIT.md)
+- [OpenRouter et Nano Banana](docs/technical/OPENROUTER_NANO_BANANA.md)
+- [Guide du client desktop](apps/desktop/README.md)
 
 ## État de la réorientation produit
 
