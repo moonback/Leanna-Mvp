@@ -79,6 +79,20 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
     } catch (e) { toast({ title: "Import impossible", description: e instanceof Error ? e.message : "Réessayez.", tone: "error" }); }
     finally { setImportingDiscovery(null); }
   }
+  async function createDossierFromDiscovery(item: Discovery) {
+    setCreatingDossierFor(item.id);
+    try {
+      const created = await fetch("/api/v1/notebooks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: ("Enquête — " + item.title).slice(0, 200) }) });
+      const createdJson = await created.json();
+      if (!created.ok) throw new Error(created.status === 409 && createdJson.error === "max_notebooks" ? "La limite de dossiers de votre offre est atteinte." : "Création du dossier impossible.");
+      const newId = createdJson.notebook.id as string;
+      const imported = await fetch("/api/v1/notebooks/" + newId + "/notices", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ catalogId: item.id }) });
+      if (!imported.ok) { await fetch("/api/v1/notebooks/" + newId, { method: "DELETE" }).catch(() => {}); throw new Error("Le dossier a été créé, mais la publication n'a pas pu être importée."); }
+      toast({ title: "Dossier d’enquête créé", description: "La publication est ajoutée comme source à examiner." });
+      router.push("/notebook/" + newId + "/notices");
+    } catch (e) { toast({ title: "Création impossible", description: e instanceof Error ? e.message : "Réessayez.", tone: "error" }); }
+    finally { setCreatingDossierFor(null); }
+  }
   async function review(notice: Notice, patch: Record<string, string>) {
     const response = await fetch(`/api/v1/notebooks/${notebookId}/notices/${notice.id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(patch) });
     if (!response.ok) return toast({ title: "Mise à jour impossible", tone: "error" });
@@ -157,7 +171,7 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
             {item.excerpt && <p className="text-sm text-text-muted">{item.excerpt}</p>}
             <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-2">
               <Link href={item.source_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-accent hover:underline"><ExternalLink aria-hidden className="size-4" /> Ouvrir la publication originale</Link>
-              {canEdit && <Button size="sm" loading={importingDiscovery === item.id} disabled={importingDiscovery !== null} onClick={() => void importDiscovery(item)}>Ajouter à ce dossier</Button>}
+              {canEdit && <><Button size="sm" variant="secondary" loading={importingDiscovery === item.id} disabled={importingDiscovery !== null || creatingDossierFor !== null} onClick={() => void importDiscovery(item)}>Ajouter à ce dossier</Button><Button size="sm" variant="soft" loading={creatingDossierFor === item.id} disabled={importingDiscovery !== null || creatingDossierFor !== null} onClick={() => void createDossierFromDiscovery(item)}>Créer un dossier</Button></>}
             </div>
           </Card>
         ))}
