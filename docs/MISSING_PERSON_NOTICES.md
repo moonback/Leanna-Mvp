@@ -4,7 +4,7 @@
 
 Le module combine un catalogue de publications détectées automatiquement et des fiches privées rattachées aux dossiers d'enquête.
 
-- Le worker Node interroge le flux RSS WordPress du site 116 000 toutes les 15 minutes.
+- Le worker Node interroge l'endpoint RSS WordPress standard `/feed/` du domaine 116 000 toutes les 15 minutes. Le site officiel confirme l'existence d'alertes par e-mail pour les nouvelles publications, mais ne documente pas explicitement ce flux RSS : sa disponibilité et le fait qu'il contienne bien les avis doivent être validés sur l'environnement worker avant de considérer la veille comme opérationnelle.
 - Les requêtes utilisent ETag et Last-Modified lorsqu'ils sont fournis par le serveur, avec délai réseau, limite de taille, validation stricte du domaine et bail SQL pour éviter les synchronisations concurrentes.
 - Les métadonnées publiques (titre, URL, extrait RSS, date et identifiant de publication) sont conservées dans un catalogue global.
 - Les utilisateurs connectés voient les publications détectées depuis l'espace Avis de recherche de leur dossier. Ils peuvent ajouter une publication à ce dossier ou créer directement un nouveau dossier privé.
@@ -15,7 +15,7 @@ Le module combine un catalogue de publications détectées automatiquement et de
 
 | Source | Automatisation | Motif |
 |---|---|---|
-| 116 000 Enfants Disparus | RSS configuré, synchronisation automatique toutes les 15 minutes | Le worker ne lit que le flux public du domaine officiel et ne télécharge aucune photo. Vérifier la disponibilité effective du flux sur l'environnement déployé. |
+| 116 000 Enfants Disparus | Endpoint RSS WordPress configuré, synchronisation automatique toutes les 15 minutes | Le worker ne lit que le flux du domaine officiel et ne télécharge aucune photo. Le flux n'est pas documenté explicitement par le site : sa disponibilité et son contenu doivent être confirmés en production. |
 | ARPD | Désactivée pour le moment | L'annuaire public est visible, mais le flux officiel et les conditions d'accès automatisé n'ont pas été confirmés. Le domaine renvoie actuellement une réponse 403 à la consultation automatisée utilisée pendant l'audit. |
 | INTERPOL — notices jaunes | Pas de collecte automatique | INTERPOL indique que certaines notices sont réservées aux services de police. Les conditions du site limitent la collecte automatisée sans autorisation expresse. Conserver le lien vers la recherche publique ; demander un accord avant un connecteur. |
 
