@@ -85,7 +85,9 @@ export function investigationCrosscheckHandler(db: SupabaseClient, llm: Llm): Ha
       },
       {
         role: "user",
-        content: "Analyse ces éléments structurés de plusieurs sources. Propose au maximum 12 pistes de vérification documentaire. JSON attendu : {leads:[{title, verification_question, confidence:low|moderate|high, next_check, evidence:[{record_id, role:support|contrary, quote}]}]}. Chaque piste doit citer au moins deux record_id de deux source_id distincts. Les quotes doivent être des sous-chaînes exactes du champ quote correspondant. Si aucune piste ne satisfait ces règles, retourne {leads:[]} .\n\nRECORDS_JSON: " + JSON.stringify(input),
+        content: "Analyse ces éléments structurés de plusieurs sources. Propose au maximum 12 pistes de vérification documentaire. JSON attendu : {leads:[{title, verification_question, confidence:low|moderate|high, next_check, evidence:[{record_id, role:support|contrary, quote}]}]}. Chaque piste doit citer au moins deux record_id de deux source_id distincts. Les quotes doivent être des sous-chaînes exactes du champ quote correspondant. Si aucune piste ne satisfait ces règles, retourne {leads:[]} .
+
+RECORDS_JSON: " + JSON.stringify(input),
       },
     ], { json: true, maxTokens: 5200 });
     const parsed = parseCrosscheck(response.text);
@@ -106,7 +108,9 @@ export function investigationCrosscheckHandler(db: SupabaseClient, llm: Llm): Ha
       if (support.length === 0 || distinctSources.size < 2 || evidence.length < 2) continue;
       const primary = support[0];
       const counterEvidence = evidence.filter((item) => item.item.role === "contrary")
-        .map((item) => `${item.item.quote} [source ${item.record.source_id}]`).join("\n\n").slice(0, 4000);
+        .map((item) => `${item.item.quote} [source ${item.record.source_id}]`).join("
+
+").slice(0, 4000);
       const evidenceKey = evidence.map((item) => `${item.record.id}:${item.item.role}:${item.item.quote}`).sort();
       const extractionKey = hash([job.notebook_id, candidate.title, ...evidenceKey]);
       const { data: lead, error: leadError } = await db.from("investigation_leads").upsert({
