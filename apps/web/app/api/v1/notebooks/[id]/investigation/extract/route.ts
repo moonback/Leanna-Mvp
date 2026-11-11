@@ -26,6 +26,7 @@ export const POST = handle(async (_req: NextRequest, { params }: Params) => {
   });
   if (queueError) {
     if (queueError.message.includes("quota_")) throw new ApiError(402, queueError.message);
+    if (queueError.message.includes("source_not_ready_or_changed")) throw new ApiError(409, "source_changed_retry");
     throw queueError;
   }
   await db.from("audit_log").insert({
