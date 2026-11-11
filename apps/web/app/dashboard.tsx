@@ -74,7 +74,7 @@ export function Dashboard({ initial, loadError, initialView }: { initial: Notebo
       <Button size="sm" className="shrink-0" onClick={create} loading={creating}><Plus aria-hidden /> <span className="hidden sm:inline">Nouvelle enquête</span><span className="sr-only sm:hidden">Nouvelle enquête</span></Button>
     </AppHeader>
     <main className="mx-auto grid max-w-[var(--page-max-w)] gap-6 px-4 py-8 sm:px-6">
-      {loadError && <Alert tone="danger" title="Impossible de charger vos notebooks" action={<Button size="sm" variant="secondary" onClick={() => router.refresh()}>Réessayer</Button>} />}
+      {loadError && <Alert tone="danger" title="Impossible de charger vos dossiers d’enquête" action={<Button size="sm" variant="secondary" onClick={() => router.refresh()}>Réessayer</Button>} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Tabs value={tab} onValueChange={(v) => { if (v === "discover") router.push("/discover"); else setTab(v as Tab); }}>
@@ -100,7 +100,7 @@ export function Dashboard({ initial, loadError, initialView }: { initial: Notebo
           </EmptyState>
         </Card>
       ) : visible.length === 0 ? (
-        <Card><EmptyState icon={<SearchX />} title="Aucun résultat">Aucun notebook ne correspond à ce filtre.</EmptyState></Card>
+        <Card><EmptyState icon={<SearchX />} title="Aucun résultat">Aucun dossier ne correspond à ce filtre.</EmptyState></Card>
       ) : view === "grid" ? (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.map((n) => (
