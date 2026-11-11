@@ -162,8 +162,8 @@ Aucun fichier `LICENSE` n'a été trouvé à la racine via l'API GitHub lors de 
 **État documentaire :** les guides sont indexés dans [docs/README.md](docs/README.md). Les tests, migrations et parcours déployés doivent être validés séparément avant mise en production.
 
 
-## Avis de recherche publics
+## Avis de recherche et veille automatique
 
-Le module d'avis de recherche est accessible depuis un dossier d'enquête. Il permet d'archiver manuellement une publication ARPD, 116 000 Enfants Disparus ou INTERPOL comme source web du dossier, avec une fiche structurée en attente de revue humaine, une provenance et un historique des instantanés. Cette première version n'effectue pas de scraping automatique et ne revendique aucune API publique. Voir [le guide Avis de recherche](docs/MISSING_PERSON_NOTICES.md).
+Leanna dispose d'un catalogue de publications détectées automatiquement depuis le flux RSS public du 116 000 Enfants Disparus. Le worker vérifie ce flux toutes les 15 minutes, conserve la provenance et les changements, puis permet d'ajouter une publication à un dossier ou de créer un nouveau dossier privé. Les fiches importées restent à examiner et à valider humainement.
 
-Un avis retiré ou inaccessible n'est jamais interprété comme une confirmation que la personne a été retrouvée. Les données restent privées dans le dossier et les images ne sont pas copiées automatiquement.
+L'automatisation ARPD est désactivée tant que le flux et les conditions d'accès ne sont pas confirmés. INTERPOL n'est pas aspiré automatiquement : ses conditions et la confidentialité de certaines notices imposent une autorisation préalable. Aucun avis absent du flux n'est automatiquement considéré comme retiré ou résolu. Voir [le guide de veille et d'import](docs/MISSING_PERSON_NOTICES.md).
