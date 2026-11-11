@@ -1,11 +1,7 @@
 -- Modèle métier d'enquête : provenance, isolation RLS et revue sous contrôle serveur.
 begin;
 create extension if not exists pgtap with schema extensions;
-<<<<<<< HEAD
-select plan(10);
-=======
 select plan(12);
->>>>>>> 8d32174cb72a8c0569c39cc488598fa5f89d530f
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'inv-a@test.local'),
@@ -29,10 +25,7 @@ select public.add_source(
   '00000000-0000-0000-0000-00000000000a',
   'txt', 'Compte rendu'
 ) as id;
-<<<<<<< HEAD
-=======
 grant select on src to authenticated, service_role;
->>>>>>> 8d32174cb72a8c0569c39cc488598fa5f89d530f
 update public.sources set status = 'ready' where id = (select id from src);
 
 insert into public.investigation_entities
@@ -87,18 +80,6 @@ select is(
 );
 select is(
   (select count(*)::int from public.usage_ledger where feature = 'investigation_extract' and status = 'reserved'),
-<<<<<<< HEAD
-  1, 'un seul crédit est réservé pour une analyse idempotente'
-);
-reset role;
-
-create or replace function pg_temp.login(p uuid) returns void language sql as $
-  select set_config('request.jwt.claims', json_build_object('sub', p, 'role', 'authenticated')::text, true);
-  set local role authenticated;
-$$;
-
-select pg_temp.login('00000000-0000-0000-0000-00000000000a');
-=======
   1, 'un seul crédit est réservé pour une extraction idempotente'
 );
 select is(
@@ -122,7 +103,6 @@ reset role;
 
 select set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-0000-0000-00000000000a', 'role', 'authenticated')::text, true);
 set local role authenticated;
->>>>>>> 8d32174cb72a8c0569c39cc488598fa5f89d530f
 select is(
   (select (select count(*) from public.investigation_entities)
         + (select count(*) from public.investigation_events)
@@ -137,22 +117,14 @@ select throws_ok(
 );
 reset role;
 
-<<<<<<< HEAD
-select pg_temp.login('00000000-0000-0000-0000-00000000000b');
-=======
 select set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-0000-0000-00000000000b', 'role', 'authenticated')::text, true);
 set local role authenticated;
->>>>>>> 8d32174cb72a8c0569c39cc488598fa5f89d530f
 select is((select count(*)::int from public.investigation_leads), 1, 'un lecteur autorisé peut consulter les pistes');
 select is((select count(*)::int from public.investigation_lead_evidence), 1, 'un lecteur autorisé voit les extraits probants associés');
 reset role;
 
-<<<<<<< HEAD
-select pg_temp.login('00000000-0000-0000-0000-00000000000c');
-=======
 select set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-0000-0000-00000000000c', 'role', 'authenticated')::text, true);
 set local role authenticated;
->>>>>>> 8d32174cb72a8c0569c39cc488598fa5f89d530f
 select is((select count(*)::int from public.investigation_entities), 0, 'un utilisateur extérieur ne voit aucune entité');
 reset role;
 
