@@ -1,6 +1,6 @@
-# Leanna mvp
+# Leanna — plateforme documentaire pour enquêtes sur personnes disparues
 
-Assistant de recherche documentaire : rassemblez vos sources, posez des questions à leur sujet et vérifiez les réponses grâce à des citations qui renvoient aux passages d'origine. Le Studio transforme le corpus en supports de synthèse, de création et de révision.
+Leanna transforme chaque notebook en **dossier d’enquête documentaire**. Les équipes autorisées y centralisent avis de recherche, rapports, témoignages, photos et autres pièces, puis interrogent le corpus pour retrouver les éléments pertinents, comparer les versions, reconstruire une chronologie et préparer des pistes à vérifier. Chaque réponse renvoie aux passages d’origine.
 
 Leanna Notebook est une application SaaS multi-utilisateur fondée sur Next.js, Supabase et un worker Node. Le dépôt contient également un client desktop Electron. Le projet est en développement actif ; les états ci-dessous distinguent les capacités repérées dans le code des validations opérationnelles qui restent à effectuer.
 
@@ -8,13 +8,13 @@ Leanna Notebook est une application SaaS multi-utilisateur fondée sur Next.js, 
 
 | Domaine | Capacités repérées dans le code | Réserve |
 |---|---|---|
-| Notebooks | Organisation, membres, liens de partage, visites et copie | Parcours de bout en bout non retesté ici |
+| Dossiers d’enquête | Organisation documentaire, membres, liens de partage, visites et copie | Le modèle de données conserve le nom technique `notebooks` ; le parcours métier est en cours de spécialisation |
 | Sources | Import, traitement, sélection, recherche et citations | OCR des PDF scannés non confirmé |
-| Chat | Streaming SSE, recherche hybride, citations résolues et notes | Dépend de la configuration Supabase/IA |
+| Analyse d’enquête | Chat streaming, citations, extraction IA contrôlée des entités/événements/déclarations et recoupement multi-sources proposant des pistes sourcées | Les pistes restent des propositions à valider humainement ; aucune fusion automatique d’identités ni conclusion d’enquête |
 | Studio | Rapports, fiches, quiz, cartes mentales, infographies, chronologies, comparatifs, glossaires, FAQ, diagrammes, contenus éditoriaux et plans d'étude | 13 types acceptés par l'API ; résultats visuels non validés exhaustivement |
 | Audio Overview | Script dialogué à deux voix, TTS segmenté, mixage ffmpeg et MP3 privé | Nécessite les identifiants TTS et ffmpeg sur le worker |
 | Mode vocal | Gemini Live, recherche RAG, Leanna et co-animatrice Roxane | Roxane est désactivée par défaut ; deux premiers échanges silencieux |
-| Prompts système | Catalogue éditable par utilisateur dans les réglages, avec sauvegarde et réinitialisation | Traçage des prompts de résumé encore incomplet |
+| Prompts système | Catalogue éditable par utilisateur ; consignes spécialisées pour analyse de dossier, rapport, chronologie, comparaison et briefings vocaux | Les règles fixes de prudence et de citation sont ajoutées côté serveur pour le chat ; les prompts personnalisés des autres tâches doivent être revus progressivement |
 | Modèles IA | Catalogue OpenRouter et préférences par fonctionnalité | Dépend de la clé OpenRouter |
 | Fast Research / Découvrir | Routes de recherche, import de résultats et ouverture de découvertes | Parcours complet non retesté ici |
 | Electron | Client desktop, configuration de build et dépendance electron-updater | Installation et mise à jour non validées dans cette passe |
@@ -23,6 +23,15 @@ Leanna Notebook est une application SaaS multi-utilisateur fondée sur Next.js, 
 | Présentations | Type `slide_deck` présent dans l'enum SQL | Non accepté par le schéma de création Studio inspecté |
 
 Le statut « repéré dans le code » ne signifie pas qu'une fonctionnalité a été testée en production. Voir le [rapport d'audit](docs/DOCUMENTATION_AUDIT.md).
+
+## Principes de traitement des informations d’enquête
+
+- Un document qui rapporte une information prouve que celle-ci est consignée, pas nécessairement qu’elle est vraie.
+- Les réponses distinguent faits documentés, déclarations/témoignages, informations non vérifiées, hypothèses, pistes et contradictions.
+- Chaque affirmation issue du corpus doit citer ses passages ; les références ne doivent jamais être inventées.
+- Une piste IA n’est ni une preuve ni une conclusion. Toute vérification et toute décision restent sous contrôle humain et, lorsque nécessaire, des autorités compétentes.
+- Aucune personne ne doit être accusée sur la base d’une corrélation, d’une rumeur ou d’une inférence non vérifiée.
+- Les données du dossier sont confidentielles ; leur diffusion nécessite une autorisation et un cadre approprié.
 
 ## Architecture technique
 
@@ -125,6 +134,7 @@ Ces commandes proviennent des manifestes du dépôt ; elles n'ont pas été exé
 L'index de référence est [docs/README.md](docs/README.md).
 
 Documents importants :
+- [Vision produit — enquêtes sur personnes disparues](docs/PRODUCT_VISION.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Référence API](docs/API_REFERENCE.md)
 - [Base de données](docs/DATABASE.md)
@@ -134,6 +144,10 @@ Documents importants :
 - [Studio](docs/features/STUDIO.md)
 - [Guide utilisateur](docs/user-guide/GETTING_STARTED.md)
 - [Audit documentaire](docs/DOCUMENTATION_AUDIT.md)
+
+## État de la réorientation produit
+
+Cette branche ajoute les fondations métier du dossier d’enquête : entités mentionnées, événements, déclarations et pistes persistées, chacune rattachée à ses sources et extraits. Le panneau permet la saisie, la revue humaine, l’extraction IA par lots et le recoupement multi-sources qui propose des pistes sans les valider. Les extraits IA ne sont enregistrés que s’ils correspondent exactement au texte source ; les traitements sont idempotents et journalisés. La résolution des homonymes, les relations permanentes entre entités et les chronologies avancées restent à développer.
 
 ## Contribution
 
