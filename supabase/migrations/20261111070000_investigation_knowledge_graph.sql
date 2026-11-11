@@ -173,20 +173,27 @@ as $
 declare
   v_source_id uuid;
   v_text text;
+  v_context text;
 begin
   if new.statement_id is not null then
-    select source_id into v_source_id from public.investigation_statements
+    select source_id, context_excerpt into v_source_id, v_context
+      from public.investigation_statements
       where id = new.statement_id and notebook_id = new.notebook_id;
   elsif new.event_id is not null then
-    select source_id into v_source_id from public.investigation_events
+    select source_id, context_excerpt into v_source_id, v_context
+      from public.investigation_events
       where id = new.event_id and notebook_id = new.notebook_id;
   elsif new.entity_mention_id is not null then
-    select source_id into v_source_id from public.investigation_entities e
+    select e.source_id, e.context_excerpt into v_source_id, v_context
+      from public.investigation_entities e
       join public.investigation_entity_mentions m on m.entity_id = e.id and m.notebook_id = e.notebook_id
       where m.id = new.entity_mention_id and m.notebook_id = new.notebook_id;
   end if;
   if v_source_id is not null and v_source_id <> new.source_id then
     raise exception 'evidence_source_mismatch' using errcode = '23514';
+  end if;
+  if v_context is not null and position(new.quote in v_context) = 0 then
+    raise exception 'evidence_context_mismatch' using errcode = '23514';
   end if;
   select extracted_text into v_text from public.sources
     where id = new.source_id and notebook_id = new.notebook_id;
@@ -256,11 +263,16 @@ as $
 declare
   v_source_id uuid;
   v_text text;
+  v_context text;
 begin
-  select source_id into v_source_id from public.investigation_statements
+  select source_id, context_excerpt into v_source_id, v_context
+    from public.investigation_statements
     where id = new.statement_id and notebook_id = new.notebook_id;
   if v_source_id is null or v_source_id <> new.source_id then
     raise exception 'evidence_source_mismatch' using errcode = '23514';
+  end if;
+  if v_context is null or position(new.quote in v_context) = 0 then
+    raise exception 'evidence_context_mismatch' using errcode = '23514';
   end if;
   select extracted_text into v_text from public.sources
     where id = new.source_id and notebook_id = new.notebook_id;
