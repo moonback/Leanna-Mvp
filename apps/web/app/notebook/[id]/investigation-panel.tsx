@@ -72,7 +72,7 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
       await load();
     } catch (e) {
       const code = e instanceof Error ? e.message : "extract_failed";
-      toast({ title: code.includes("quota_") ? "Crédits IA insuffisants" : code === "ai_not_configured" ? "Modèle IA non configuré" : code === "no_ready_sources" ? "Aucune source prête" : "Analyse impossible", description: code, tone: "error" });
+      toast({ title: code.includes("quota_") ? "Crédits IA insuffisants" : code === "ai_not_configured" ? "Modèle IA non configuré" : code === "no_ready_sources" ? "Aucune source prête" : code === "source_changed_retry" ? "Une source a changé, rechargez le dossier" : "Analyse impossible", description: code, tone: "error" });
     } finally { setExtracting(false); }
   };
 
