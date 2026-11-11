@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ExternalLink, FileText, Plus, RefreshCw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
@@ -20,6 +21,8 @@ const SOURCE_LABELS = { arpd: "ARPD", "116000": "116 000 Enfants Disparus", inte
 const STATUS_LABELS: Record<string, string> = { unverified: "Publication à vérifier", active: "Publication active", changed: "Publication modifiée", removed: "Publication retirée", unavailable: "Source inaccessible", pending_review: "À examiner", approved: "Validé par un éditeur", rejected: "Écarté" };
 
 export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: string; canEdit: boolean }) {
+  const router = useRouter();
+  const [creatingDossierFor, setCreatingDossierFor] = React.useState<string | null>(null);
   const [notices, setNotices] = React.useState<Notice[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
@@ -65,6 +68,25 @@ export function MissingPersonNotices({ notebookId, canEdit }: { notebookId: stri
     const response = await fetch(`/api/v1/notebooks/${notebookId}/notices/${notice.id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(patch) });
     if (!response.ok) return toast({ title: "Mise à jour impossible", tone: "error" });
     await load();
+  }
+
+  async function createDossier(notice: Notice) {
+    setCreatingDossierFor(notice.id);
+    try {
+      const created = await fetch("/api/v1/notebooks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: "Enquête — " + notice.person_name }) });
+      const createdJson = await created.json();
+      if (!created.ok) throw new Error(created.status === 409 && createdJson.error === "max_notebooks" ? "La limite de dossiers de votre offre est atteinte." : "Création du dossier impossible.");
+      const newNotebookId = createdJson.notebook.id as string;
+      const imported = await fetch("/api/v1/notebooks/" + newNotebookId + "/notices", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sourceName: notice.source_name, sourceUrl: notice.source_url, sourceReference: notice.source_reference, personName: notice.person_name, publishedDateText: notice.published_date_text, disappearanceLocation: notice.disappearance_location, publishedSummary: notice.published_summary }) });
+      if (!imported.ok) {
+        await fetch("/api/v1/notebooks/" + newNotebookId, { method: "DELETE" }).catch(() => {});
+        throw new Error("Le dossier a été créé, mais l'avis n'a pas pu être importé. Réessayez.");
+      }
+      toast({ title: "Dossier d’enquête créé", description: "L’avis a été ajouté comme source à examiner." });
+      router.push("/notebook/" + newNotebookId + "/notices");
+    } catch (e) {
+      toast({ title: "Création impossible", description: e instanceof Error ? e.message : "Réessayez.", tone: "error" });
+    } finally { setCreatingDossierFor(null); }
   }
 
   return (
