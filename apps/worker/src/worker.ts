@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type JobKind =
   | "ingest_source" | "sync_source" | "source_guide" | "auto_label" | "notebook_overview"
-  | "generate_artifact" | "research" | "investigation_extract" | "copy_notebook" | "export_account" | "delete_account" | "purge_storage";
+  | "generate_artifact" | "research" | "investigation_extract" | "investigation_crosscheck" | "copy_notebook" | "export_account" | "delete_account" | "purge_storage";
 
 export type Job = {
   id: string; kind: JobKind; workspace_id: string; notebook_id: string | null; target_id: string | null;
