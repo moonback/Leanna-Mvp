@@ -1,7 +1,7 @@
 -- Graphe d'enquête : isolation, provenance, relations, contradictions et filiation acyclique.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(12);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000001a', 'graph-owner@test.local'),
@@ -30,7 +30,7 @@ select public.add_source(
 ) as id;
 grant select on graph_src_a, graph_src_b to authenticated, service_role;
 update public.sources set status = 'ready', extracted_text = case
-  when id = (select id from graph_src_a) then 'Le témoin indique : la personne était au lieu A.'
+  when id = (select id from graph_src_a) then 'Préambule du rapport. Le témoin indique : la personne était au lieu A.'
   when id = (select id from graph_src_b) then 'Un second témoin indique : la personne était au lieu B.'
   else extracted_text end
 where id in ((select id from graph_src_a), (select id from graph_src_b));
@@ -101,7 +101,7 @@ join public.investigation_statements s on s.notebook_id = r.notebook_id
 where s.source_id = (select id from graph_src_a);
 
 select throws_ok(
-  $ insert into public.investigation_relation_evidence
+  $test$ insert into public.investigation_relation_evidence
        (workspace_id, notebook_id, relation_id, source_id, evidence_role, quote, quote_hash, statement_id)
      select ws, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', r.id, (select id from graph_src_b),
        'support', 'Un second témoin indique : la personne était au lieu B.',
@@ -110,18 +110,30 @@ select throws_ok(
      from graph_ctx
      join public.investigation_relations r on r.notebook_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
      join public.investigation_statements s on s.notebook_id = r.notebook_id
-     where s.source_id = (select id from graph_src_a) $,
+     where s.source_id = (select id from graph_src_a) $test$,
   '23514', 'evidence_source_mismatch', 'une preuve ne peut pas citer une déclaration issue d une autre source'
 );
 select throws_ok(
-  $ insert into public.investigation_relation_evidence
+  $test$ insert into public.investigation_relation_evidence
        (workspace_id, notebook_id, relation_id, source_id, evidence_role, quote, quote_hash)
      select ws, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', r.id, (select id from graph_src_a),
        'support', 'Citation absente de la pièce.',
        encode(sha256(convert_to('Citation absente de la pièce.', 'UTF8')), 'hex')
      from graph_ctx
-     join public.investigation_relations r on r.notebook_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' $,
+     join public.investigation_relations r on r.notebook_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' $test$,
   '23514', 'evidence_quote_not_found', 'une citation absente du texte source est refusée'
+);
+select throws_ok(
+  $test$ insert into public.investigation_relation_evidence
+       (workspace_id, notebook_id, relation_id, source_id, evidence_role, quote, quote_hash, statement_id)
+     select ws, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', r.id, (select id from graph_src_a),
+       'support', 'Préambule du rapport.',
+       encode(sha256(convert_to('Préambule du rapport.', 'UTF8')), 'hex'), s.id
+     from graph_ctx
+     join public.investigation_relations r on r.notebook_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+     join public.investigation_statements s on s.notebook_id = r.notebook_id
+     where s.source_id = (select id from graph_src_a) $test$,
+  '23514', 'evidence_context_mismatch', 'une citation doit appartenir à l extrait de la déclaration citée'
 );
 
 insert into public.investigation_source_lineage
