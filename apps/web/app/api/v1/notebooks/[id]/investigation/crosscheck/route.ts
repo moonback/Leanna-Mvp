@@ -28,17 +28,19 @@ export const POST = handle(async (_req: NextRequest, { params }: Params) => {
     ...(statements.data ?? []).map((x) => x.source_id),
   ]).size;
   if (sourceCount < 2) throw new ApiError(409, "insufficient_sources");
-  const { error } = await db.from("jobs").insert({
-    workspace_id: notebook.workspace_id, notebook_id: id, user_id: user.id,
-    kind: "investigation_crosscheck", target_id: null,
-    payload: { requested_by: user.id },
-    idempotency_key: `investigation-crosscheck:${id}:${randomUUID()}`,
+  const { data: jobId, error: queueError } = await db.rpc("queue_investigation_crosscheck_job", {
+    p_notebook: id,
+    p_user: user.id,
+    p_idempotency_key: `investigation-crosscheck:${id}:${randomUUID()}`,
   });
-  if (error) throw error;
+  if (queueError) {
+    if (queueError.message.includes("quota_")) throw new ApiError(402, queueError.message);
+    throw queueError;
+  }
   await db.from("audit_log").insert({
     workspace_id: notebook.workspace_id, actor_id: user.id,
     action: "investigation.crosscheck.request", target_type: "notebook", target_id: id,
     meta: { source_count: sourceCount },
   });
-  return NextResponse.json({ source_count: sourceCount, status: "queued" }, { status: 202 });
+  return NextResponse.json({ source_count: sourceCount, job_id: jobId, status: "queued" }, { status: 202 });
 });
