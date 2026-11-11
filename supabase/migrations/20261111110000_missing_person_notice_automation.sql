@@ -54,7 +54,7 @@ revoke all on public.missing_person_notice_sync_state from anon, authenticated;
 grant select on public.missing_person_notice_catalog to authenticated;
 grant all on public.missing_person_notice_catalog, public.missing_person_notice_sync_state to service_role;
 
-create or replace function private.claim_missing_person_notice_sync(p_source text, p_lease_seconds integer default 90)
+create or replace function public.claim_missing_person_notice_sync(p_source text, p_lease_seconds integer default 90)
 returns boolean
 language plpgsql
 security definer
@@ -71,5 +71,5 @@ begin
   return affected = 1;
 end;
 $$;
-revoke all on function private.claim_missing_person_notice_sync(text, integer) from public, anon, authenticated;
-grant execute on function private.claim_missing_person_notice_sync(text, integer) to service_role;
+revoke all on function public.claim_missing_person_notice_sync(text, integer) from public, anon, authenticated;
+grant execute on function public.claim_missing_person_notice_sync(text, integer) to service_role;
