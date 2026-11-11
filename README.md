@@ -135,6 +135,7 @@ L'index de référence est [docs/README.md](docs/README.md).
 
 Documents importants :
 - [Vision produit — enquêtes sur personnes disparues](docs/PRODUCT_VISION.md)
+- [Investigation Graph — graphe, provenance et chronologie](docs/INVESTIGATION_GRAPH.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Référence API](docs/API_REFERENCE.md)
 - [Base de données](docs/DATABASE.md)
