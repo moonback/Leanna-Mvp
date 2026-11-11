@@ -259,7 +259,12 @@ begin
   insert into public.jobs (workspace_id, notebook_id, user_id, kind, target_id, payload, idempotency_key)
     values (v_ws, p_notebook, p_user, 'investigation_crosscheck', null,
       jsonb_build_object('requested_by', p_user), p_idempotency_key)
+    on conflict (idempotency_key) do nothing
     returning id into v_job;
+  if v_job is null then
+    select id into v_job from public.jobs where idempotency_key = p_idempotency_key;
+    return v_job;
+  end if;
   v_usage := public.reserve_usage(v_ws, p_user, 'investigation_crosscheck', v_job);
   update public.jobs set usage_id = v_usage where id = v_job;
   return v_job;
