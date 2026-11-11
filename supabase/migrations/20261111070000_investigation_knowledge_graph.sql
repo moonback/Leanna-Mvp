@@ -81,6 +81,8 @@ language plpgsql
 set search_path = ''
 as $fn$
 begin
+  -- Sérialise les modifications de filiation par dossier pour empêcher deux insertions concurrentes de créer un cycle.
+  perform pg_advisory_xact_lock(hashtext('investigation_source_lineage'), hashtext(new.notebook_id::text));
   if exists (
     with recursive reachable(source_id) as (
       select l.child_source_id
