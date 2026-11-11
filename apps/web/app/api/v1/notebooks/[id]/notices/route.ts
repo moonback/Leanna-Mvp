@@ -38,23 +38,26 @@ function allowedSourceUrl(raw: string, sourceName: keyof typeof SOURCES): URL {
   return url;
 }
 
-/** Avis publics saisis depuis leur publication originale ; lecture isolée par dossier sous RLS. */
+/** Avis publics découverts dans les flux autorisés ou importés manuellement ; fiches privées sous RLS. */
 export const GET = handle(async (_req: NextRequest, { params }: Params) => {
   await requireUser();
   const { id } = await params;
   await requireRole(id, "viewer");
   const supabase = await createUserClient();
-  const [{ data: notices, error }, { data: revisions, error: revisionError }, { data: catalog, error: catalogError }] = await Promise.all([
+  const admin = createServiceClient();
+  const [{ data: notices, error }, { data: revisions, error: revisionError }, { data: catalog, error: catalogError }, { data: syncStatus, error: syncError }] = await Promise.all([
     supabase.from("missing_person_notices").select("id, catalog_id, source_name, source_url, source_reference, person_name, published_date_text, disappearance_location, published_summary, publication_status, review_status, collected_at, last_seen_at, reviewed_at, review_note, source_id").eq("notebook_id", id).order("created_at", { ascending: false }),
     supabase.from("missing_person_notice_revisions").select("id, notice_id, content_hash, captured_at").eq("notebook_id", id).order("captured_at", { ascending: false }).limit(100),
     supabase.from("missing_person_notice_catalog").select("id, source_name, source_url, source_item_id, title, excerpt, published_at, publication_status, first_seen_at, last_seen_at").order("last_seen_at", { ascending: false }).limit(50),
+    admin.from("missing_person_notice_sync_state").select("source_name, enabled, last_success_at, last_status, items_seen, last_error").eq("source_name", "116000").maybeSingle(),
   ]);
   if (error) throw error;
   if (revisionError) throw revisionError;
   if (catalogError) throw catalogError;
+  if (syncError) throw syncError;
   const imported = new Set((notices ?? []).map((notice) => notice.catalog_id).filter(Boolean));
   const discoveries = (catalog ?? []).filter((item) => !imported.has(item.id));
-  return NextResponse.json({ notices: notices ?? [], revisions: revisions ?? [], discoveries });
+  return NextResponse.json({ notices: notices ?? [], revisions: revisions ?? [], discoveries, syncStatus });
 });
 
 /** Crée une source web via le pipeline existant, puis enregistre sa fiche d'avis et sa provenance. */
