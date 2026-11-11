@@ -15,10 +15,11 @@ type EventRecord = Common & { title: string; description: string; original_date_
 type Statement = Common & { statement_type: string; content: string; speaker_label?: string | null };
 type Lead = Common & { title: string; verification_question: string; supporting_excerpt: string; counter_evidence: string; next_check: string; confidence: string; status: string };
 type ExtractionJob = { id: string; kind: string; target_id: string | null; status: string; progress: number; stage: string | null; error_code: string | null; created_at: string };
-type Data = { entities: Entity[]; events: EventRecord[]; statements: Statement[]; leads: Lead[]; extractionJobs: ExtractionJob[] };
+type LeadEvidence = { id: string; lead_id: string; source_id: string; evidence_role: "support" | "contrary"; quote: string; page_number: number | null };
+type Data = { entities: Entity[]; events: EventRecord[]; statements: Statement[]; leads: Lead[]; leadEvidence: LeadEvidence[]; extractionJobs: ExtractionJob[] };
 type Kind = "entity" | "event" | "statement" | "lead";
 
-const empty: Data = { entities: [], events: [], statements: [], leads: [], extractionJobs: [] };
+const empty: Data = { entities: [], events: [], statements: [], leads: [], leadEvidence: [], extractionJobs: [] };
 const statusLabel: Record<string,string> = {
   unverified: "Non vérifié", under_review: "À examiner", verified: "Vérifié", rejected: "Rejeté",
   proposed: "Proposée", in_review: "En revue", validated: "Validée", closed: "Clôturée",
@@ -238,6 +239,10 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
                 <p className="mt-2 text-sm">{lead.verification_question}</p>
                 {excerpt(lead.supporting_excerpt)}
                 {lead.counter_evidence && <p className="mt-2 text-xs text-text-muted">Limites / éléments contraires : {lead.counter_evidence}</p>}
+                {data.leadEvidence.filter((item) => item.lead_id === lead.id).map((item) => <div key={item.id} className="mt-2 rounded-md bg-surface-secondary p-2">
+                  <div className="flex items-center justify-between gap-2 text-xs"><span className="font-medium">{item.evidence_role === "support" ? "Élément à l’appui" : "Élément contraire"}</span>{sourceRef(item.source_id,item.page_number)}</div>
+                  <p className="mt-1 whitespace-pre-wrap text-xs text-text-muted">« {item.quote} »</p>
+                </div>)} 
                 <p className="mt-2 text-xs text-text-muted">Solidité documentaire : {lead.confidence === "high" ? "élevée" : lead.confidence === "moderate" ? "modérée" : "faible"}. Vérification proposée : {lead.next_check}</p>
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-2">{sourceRef(lead.source_id,lead.page_number)}{canEdit && lead.status !== "validated" && lead.status !== "rejected" && <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={()=>void review("lead",lead.id,"validated")}><Check aria-hidden /> Valider</Button><Button size="sm" variant="ghost" onClick={()=>void review("lead",lead.id,"rejected")}><X aria-hidden /> Rejeter</Button></span>}</div>
               </article>
