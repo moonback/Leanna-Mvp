@@ -212,7 +212,6 @@ export function InvestigationPanel({ notebookId, canEdit, sources, onOpenSource 
               <Field id="lead-title" label="Intitulé neutre de la piste"><Input id="lead-title" required value={fields.title ?? ""} onChange={(e)=>set("title",e.target.value)} /></Field>
               <Field id="lead-question" label="Question à vérifier"><Textarea id="lead-question" required value={fields.verification_question ?? ""} onChange={(e)=>set("verification_question",e.target.value)} /></Field>
               <Field id="lead-support" label="Élément source qui motive la piste"><Textarea id="lead-support" required value={fields.supporting_excerpt ?? ""} onChange={(e)=>set("supporting_excerpt",e.target.value)} /></Field>
-              <Field id="lead-counter" label="Éléments contraires / limites"><Textarea id="lead-counter" value={fields.counter_evidence ?? ""} onChange={(e)=>set("counter_evidence",e.target.value)} /></Field>
               <Field id="lead-next" label="Vérification documentaire proposée"><Textarea id="lead-next" required value={fields.next_check ?? ""} onChange={(e)=>set("next_check",e.target.value)} /></Field>
               <Field id="lead-confidence" label="Solidité documentaire"><select id="lead-confidence" value={fields.confidence ?? "low"} onChange={(e)=>set("confidence",e.target.value)} className="h-10 rounded-md border border-border-input bg-surface px-3 text-sm"><option value="low">Faible</option><option value="moderate">Modérée</option><option value="high">Élevée</option></select></Field>
             </>}
