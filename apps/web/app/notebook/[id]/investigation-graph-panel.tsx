@@ -172,7 +172,8 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
     } catch { toast({ title: "Revue impossible", tone: "error" }); }
   };
 
-  const positions = data.clusters.map((cluster, index) => {
+  const visibleClusters = data.clusters.filter((cluster) => cluster.status !== "rejected");
+  const positions = visibleClusters.map((cluster, index) => {
     const angle = (Math.PI * 2 * index) / Math.max(data.clusters.length, 1) - Math.PI / 2;
     return { id: cluster.id, x: 450 + Math.cos(angle) * (data.clusters.length > 5 ? 320 : 230), y: 245 + Math.sin(angle) * (data.clusters.length > 5 ? 165 : 125) };
   });
@@ -212,7 +213,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
                   ) : (
                     <svg viewBox="0 0 900 490" role="img" aria-label="Graphe des entités et relations du dossier" className="h-auto max-h-[520px] w-full">
                       <defs><marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="currentColor" /></marker></defs>
-                      {data.relations.map((relation) => {
+                      {data.relations.filter((relation) => relation.status !== "rejected").map((relation) => {
                         const a = positionById.get(relation.subject_cluster_id);
                         const b = positionById.get(relation.object_cluster_id);
                         if (!a || !b) return null;
@@ -222,7 +223,7 @@ export function InvestigationGraphPanel({ notebookId, canEdit, sources, onOpenSo
                         </g>;
                       })}
                       {positions.map((point) => {
-                        const node = data.clusters.find((cluster) => cluster.id === point.id)!;
+                        const node = visibleClusters.find((cluster) => cluster.id === point.id)!;
                         return <g key={point.id}>
                           <circle cx={point.x} cy={point.y} r="34" fill="currentColor" fillOpacity={node.status === "confirmed" ? 0.16 : 0.07} stroke="currentColor" strokeOpacity={node.status === "confirmed" ? 0.8 : 0.35} strokeWidth="2" />
                           <text x={point.x} y={point.y+4} textAnchor="middle" fontSize="10" fill="currentColor">{entityLabels[node.entity_type] ?? "Entité"}</text>
