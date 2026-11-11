@@ -111,6 +111,16 @@ Une piste doit contenir :
 
 ## 9. État réel de cette branche
 
-Cette première implémentation spécialise les prompts du chat et des deux voix, le catalogue de prompts du Studio, les libellés principaux de l'accueil et de l'espace dossier, ainsi que la documentation produit. Elle s'appuie encore sur les objets existants (notebooks, sources, messages, citations et artefacts).
+Cette branche comprend désormais :
+- la spécialisation des prompts du chat, de Leanna/Roxane et du Studio ;
+- les libellés de l'accueil et de l'espace dossier orientés enquêtes ;
+- un registre persistant pour les entités mentionnées, événements, déclarations et pistes ;
+- une provenance par source, extrait exact, page et offsets quand disponibles ;
+- une extraction IA explicite par lots, avec validation stricte des citations, reprise idempotente et réservation de crédits ;
+- un recoupement multi-sources qui ne propose une piste que si elle relie au moins deux sources distinctes ;
+- un registre de preuves pour chaque piste, y compris les éléments contraires ;
+- une revue humaine avec statuts et journalisation.
 
-Les personnes, événements, déclarations, contradictions et pistes ne sont pas encore des objets métier persistés et validables dans l'interface. Cette évolution nécessite une migration dédiée, des politiques RLS, des handlers et des écrans de revue ; elle ne doit pas être considérée comme livrée par la seule spécialisation des prompts.
+Les pistes créées par l'IA restent au statut proposé. Un extrait marqué comme contrôlé signifie que sa présence dans la pièce a été vérifiée, pas que l'affirmation rapportée est vraie. Aucune personne n'est fusionnée automatiquement avec un homonyme et aucune piste n'est une preuve ou une conclusion.
+
+Restent à développer : résolution prudente des homonymes, graphe de relations persistantes entre éléments, vues chronologiques avancées, analyse des contradictions avec une gestion plus fine des témoignages indépendants, et tests d'intégration complets sur une base Supabase locale.
